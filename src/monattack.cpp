@@ -6067,7 +6067,7 @@ bool mattack::melee_bot( monster *bot )
     }
     int dam = rng( 10, 20 );
 
-    body_part hit = target->get_random_body_part();
+    body_part hit = target->get_random_body_part()->token;
     dam = target->deal_damage( bot, hit, damage_instance( attack_type, dam ) ).total_damage();
 
     if( dam > 0 ) {

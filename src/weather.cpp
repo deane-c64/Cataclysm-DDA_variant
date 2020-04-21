@@ -547,7 +547,8 @@ void weather_effect::acid()
         for( monster &critter : g->all_monsters() ) {
             if( one_in( 10 ) && is_creature_outside( &critter ) ) {
                 // 1 per about 590 turn
-                critter.apply_damage( nullptr, bp_torso, 1 );
+                const bodypart_id bp_torso_id = convert_bp( bp_torso ).id();
+                critter.apply_damage( nullptr, bp_torso_id, 1 );
             }
         }
     }
@@ -604,7 +605,8 @@ void weather_effect::acid_storm()
         for( monster &critter : g->all_monsters() ) {
             if( one_in( 10 ) && is_creature_outside( &critter ) ) {
                 // 1 per about 66 turn
-                critter.apply_damage( nullptr, bp_torso, 9 );
+                const bodypart_id bp_torso_id = convert_bp( bp_torso ).id();
+                critter.apply_damage( nullptr, bp_torso_id, 9 );
             }
         }
     }
