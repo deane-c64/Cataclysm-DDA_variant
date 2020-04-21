@@ -151,7 +151,7 @@
     "max_duration": 2,
     "duration_increment": 1,
     "difficulty": 0,
-    "max_level": 1,
+    "max_level": 0,
     "spell_class": "TECHNOMANCER",
     "energy_source": "MANA",
     "flags": [ "PERMANENT", "NO_LEGS", "CONCENTRATE" ]
@@ -343,6 +343,28 @@
     "min_range": 20,
     "max_range": 30,
     "range_increment": 1.0
+  },
+  {
+    "id": "summon_floating_disk",
+    "type": "SPELL",
+    "name": "Summon floating disk",
+    "description": "Summons a floating disk that is sworn to carry your burdens.",
+    "valid_targets": [ "ground" ],
+    "flags": [ "SOMATIC", "VERBAL", "CONCENTRATE" ],
+    "effect": "summon_vehicle",
+    "spell_class": "TECHNOMANCER",
+    "energy_source": "MANA",
+    "effect_str": "floating_disk",
+    "difficulty": 5,
+    "max_level": 20,
+    "base_casting_time": 120,
+    "base_energy_cost": 500,
+    "min_range": 1,
+    "max_range": 10,
+    "range_increment": 1,
+    "min_duration": 400000,
+    "max_duration": 9600000,
+    "duration_increment": 200
   },
   {
     "type": "SPELL",
