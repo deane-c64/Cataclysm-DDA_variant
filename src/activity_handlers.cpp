@@ -5423,13 +5423,19 @@ void activity_handlers::hentai_play_with_do_turn( player_activity *act, player *
         float bonus_multiplier = 1.0f;
         if( it.is_null() ) {
             bonus_multiplier *= 1.5f;
-        } 
+        }
         p->add_effect( effect_movingdoing, 10_minutes );
         if( partner != nullptr ) {
             bonus_multiplier *= 2.0f;
             bonus = std::max( p->dex_cur, partner->dex_cur );
             partner->add_effect( effect_movingdoing, 10_minutes );
             partner->add_morale( morale_type( act->str_values[1] ), bonus * bonus_multiplier, 0, 1_hours, 15_minutes );
+        }
+        if( get_option<bool>("HENTAI_EXTEND") ) {
+            if( 1 <= act->monsters.size() ) {
+                shared_ptr_fast<monster> mon_partner = act->monsters[0].lock();
+                mon_partner->add_effect( effect_movingdoing, 10_minutes );
+            }
         }
         p->add_morale( morale_type( act->str_values[1] ), bonus * bonus_multiplier, 0, 1_hours, 15_minutes );
     }
@@ -5465,6 +5471,13 @@ void activity_handlers::hentai_play_with_finish( player_activity *act, player *p
         }
     }
 
+    if( get_option<bool>("HENTAI_EXTEND") ) {
+        if( 1 <= act->monsters.size() ) {
+            shared_ptr_fast<monster> mon_partner = act->monsters[0].lock();
+            mon_partner->remove_effect( effect_movingdoing );
+        }
+    }
+
     item &it = p->i_at( act->position );
     if( !it.is_null() ) {
         if( ( rng( 1, 100 ) <= act->values[0] ) ) {
@@ -5475,7 +5488,7 @@ void activity_handlers::hentai_play_with_finish( player_activity *act, player *p
     }
 
     item liquid = item( "h_body_fluids", calendar::turn );
-    if( !it.is_null() ) {
+    if( !it.is_null() && it.has_property( "used_item" ) ) {
         item used = item( it.get_property_string( "used_item" ) );
         if( !used.is_null() ) {
             used.fill_with( liquid );

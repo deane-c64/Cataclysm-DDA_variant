@@ -1077,6 +1077,8 @@ class game
         @return whether player has slipped down
         */
         bool slip_down( bool check_for_traps = false );
+    public:
+        bool is_debug_touched = false;
 };
 
 // Returns temperature modifier from direct heat radiation of nearby sources
