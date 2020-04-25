@@ -104,6 +104,7 @@
 #include "vpart_position.h"
 #include "weather.h"
 #include "speech.h"
+#include "options.h"
 
 static const efftype_id effect_sheared( "sheared" );
 
