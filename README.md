@@ -1,4 +1,3 @@
-
 # Cataclysm-DDA_variant_jp
 
 English version (broken english warning!!)
