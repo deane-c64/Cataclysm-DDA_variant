@@ -9891,7 +9891,7 @@ void Character::gain_corrupt( int intensity, const time_duration &dur )
         add_msg_player_or_npc( _( "However you successfully resist the temptation!" ),
                                _( "However <npcname> successfully resists the temptation!" ) );
     }
-
+}
 int Character::heartrate_bpm() const
 {
     //Dead have no heartbeat usually and no heartbeat in omnicell
