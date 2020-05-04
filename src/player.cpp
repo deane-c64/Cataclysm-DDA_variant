@@ -4461,11 +4461,13 @@ bool player::query_yn( const std::string &mes ) const
     return ::query_yn( mes );
 }
 
+/*
 const pathfinding_settings &player::get_pathfinding_settings() const
 {
     return *path_settings;
 }
-
+*/
+/*
 std::set<tripoint> player::get_path_avoid() const
 {
     std::set<tripoint> ret;
@@ -4479,7 +4481,7 @@ std::set<tripoint> player::get_path_avoid() const
 
     return ret;
 }
-
+*/
 std::pair<std::string, nc_color> player::get_excrete_description() const
 {
     nc_color excrete_color;

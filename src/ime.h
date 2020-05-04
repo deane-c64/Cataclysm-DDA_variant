@@ -2,6 +2,8 @@
 #ifndef CATA_SRC_IME_H
 #define CATA_SRC_IME_H
 
+#include "options.h"
+
 /**
  * Enable or disable IME for text/keyboard input
  */

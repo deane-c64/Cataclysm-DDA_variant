@@ -6110,8 +6110,8 @@ bool mattack::melee_bot( monster *bot )
     }
     int dam = rng( 10, 20 );
 
-    body_part hit = target->get_random_body_part();
-    dam = target->deal_damage( bot, hit, damage_instance( attack_type, dam ) ).total_damage();
+    body_part hit = target->get_random_body_part()->token;
+    dam = target->deal_damage( bot,  convert_bp( hit ).id(), damage_instance( attack_type, dam ) ).total_damage();
 
     if( dam > 0 ) {
         auto msg_type = target == &g->u ? m_bad : m_info;
@@ -6130,7 +6130,7 @@ bool mattack::melee_bot( monster *bot )
                                        attack_name
                                        );
     }
-    target->on_hit( bot, hit,  bot->type->melee_skill );
+    target->on_hit( bot, convert_bp( hit ).id(),  bot->type->melee_skill );
 
     return true;
 }

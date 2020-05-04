@@ -920,7 +920,8 @@ void player_morale::on_worn_item_be_filthy( const item &it )
     if( covered.any() ) {
         for( const body_part bp : all_body_parts ) {
             if( covered.test( bp ) ) {
-                update_body_part( body_parts[bp] );
+                const bodypart_id bp_id = convert_bp( bp ).id();
+                update_body_part( body_parts[bp_id] );
             }
         }
     } else {

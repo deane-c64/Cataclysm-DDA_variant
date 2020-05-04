@@ -1302,9 +1302,10 @@ void npc::execute_action( npc_action action )
 
                             if( best_food != nullptr ) {
                                 bool consumed_completely = consume_item( *best_food );
+
                                 if( consumed_completely ){
                                     if( best_food->is_food_container() || !can_consume_as_is( *best_food ) ) {
-                                        best_food->contents.erase( best_food->contents.begin() );
+                                        best_food->remove_item( best_food->contents.front() );
                                     } else {
                                         vehicle_cursor veh_cursor = vehicle_cursor( *veh, best_food_storage_index);
                                         item_location loc = item_location( veh_cursor, best_food);
