@@ -1621,6 +1621,11 @@ class vehicle
         void use_monster_capture( int part, const tripoint &pos );
         void use_bike_rack( int part );
         void use_harness( int part, const tripoint &pos );
+        void use_toilet( int part );
+        void use_shower( int part, const std::string &mode);
+        bool is_available_washlet_resource();
+        void consume_washlet_resource();
+        void ftl_drive( int part );
 
         void interact_with( const tripoint &pos, int interact_part );
 
@@ -1823,6 +1828,14 @@ class vehicle
 
         // current noise of vehicle (engine working, etc.)
         unsigned char vehicle_noise = 0;
+
+    public:
+        bool lightmode_cargo  = false;
+        bool lightmode_turret = false;
+        bool ftl_is_charging = false;
+        int ftl_charge_percentage = 0;
+
+        bool ftl_pilot_is_manned();
 };
 
 #endif

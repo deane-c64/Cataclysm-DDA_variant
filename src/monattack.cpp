@@ -72,6 +72,7 @@
 #include "material.h"
 #include "point.h"
 #include "units.h"
+#include "options.h"
 
 static const activity_id ACT_RELOAD( "ACT_RELOAD" );
 
@@ -112,6 +113,36 @@ static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_targeted( "targeted" );
 static const efftype_id effect_teleglow( "teleglow" );
 static const efftype_id effect_under_op( "under_operation" );
+
+// littlemaid order things
+const efftype_id effect_littlemaid_play( "littlemaid_play" );
+const efftype_id effect_littlemaid_itemize( "littlemaid_itemize" );
+const efftype_id effect_littlemaid_talk( "littlemaid_talk" );
+
+// littlemaid order status things
+const efftype_id effect_littlemaid_stay( "littlemaid_stay" );
+const efftype_id effect_littlemaid_speak_off( "littlemaid_speak_off" );
+const efftype_id effect_littlemaid_wipe_liquid( "littlemaid_wipe_liquid" );
+
+// littlemaid play things
+const efftype_id effect_littlemaid_in_kiss( "littlemaid_in_kiss" );
+const efftype_id effect_littlemaid_in_petting( "littlemaid_in_petting" );
+const efftype_id effect_littlemaid_in_service( "littlemaid_in_service" );
+const efftype_id effect_littlemaid_in_special( "littlemaid_in_special" );
+
+// littlemaid playing status things
+const efftype_id effect_happiness( "happiness" );
+const efftype_id effect_comfortness( "comfortness" );
+const efftype_id effect_ecstasy( "ecstasy" );
+const efftype_id effect_maid_fatigue( "maid_fatigue" );
+
+// littlemaid auto move things
+const efftype_id effect_littlemaid_goodnight( "littlemaid_goodnight" );
+
+// for hentai mod
+static const efftype_id effect_lust( "lust" );
+static const efftype_id effect_cubi_allow_seduce_friendlyfire( "cubi_allow_seduce_friendlyfire" );
+static const efftype_id effect_went_heaven( "went_heaven" );
 
 static const skill_id skill_gun( "gun" );
 static const skill_id skill_launcher( "launcher" );
@@ -175,6 +206,10 @@ static const mtype_id mon_zombie_jackson( "mon_zombie_jackson" );
 static const mtype_id mon_zombie_skeltal_minion( "mon_zombie_skeltal_minion" );
 
 static const bionic_id bio_uncanny_dodge( "bio_uncanny_dodge" );
+
+static const species_id FUNGUS( "FUNGUS" );
+static const species_id INSECT( "INSECT" );
+static const species_id SPIDER( "SPIDER" );
 
 // shared utility functions
 static bool within_visual_range( monster *z, int max_range )
@@ -3470,6 +3505,8 @@ bool mattack::searchlight( monster *z )
     }
 
     //battery charge from the generator is enough for some time of work
+    // searchlight buff in variant
+    /*
     if( calendar::once_every( 10_minutes ) ) {
 
         bool generator_ok = false;
@@ -3491,6 +3528,7 @@ bool mattack::searchlight( monster *z )
             return true;
         }
     }
+    */
 
     for( int i = 0; i < max_lamp_count; i++ ) {
 
@@ -3526,7 +3564,7 @@ bool mattack::searchlight( monster *z )
 
         for( int i = 0; i < rng( 1, 2 ); i++ ) {
 
-            if( !z->sees( g->u ) ) {
+            if( z->friendly || !z->sees( g->u ) ) {
                 shift = settings.get_var( "SL_DIR", shift );
 
                 switch( shift ) {
@@ -5570,4 +5608,504 @@ bool mattack::dodge_check( monster *z, Creature *target )
     ///\EFFECT_DODGE increases chance of dodging, vs their melee skill
     float dodge = std::max( target->get_dodge() - rng( 0, z->get_hit() ), 0.0f );
     return rng( 0, 10000 ) < 10000 / ( 1 + 99 * exp( -.6 * dodge ) );
+}
+
+
+bool mattack::littlemaid_action( monster *maid )
+{
+
+    std::string speech_id = "";
+    if( maid->has_effect( effect_littlemaid_speak_off ) ) {
+        return true;
+    } else if ( !maid->sees( g->u ) ){
+        return true;
+    } else if( maid->has_effect( effect_littlemaid_goodnight ) ) {
+        if( g->u.in_sleep_state() ) {
+            return true;
+        } else {
+            speech_id = "mon_little_maid_R18_milk_sanpo_goodmorning";
+            maid->remove_effect( effect_littlemaid_goodnight );
+        }
+    } else if( g->u.in_sleep_state() ) {
+        speech_id = "mon_little_maid_R18_milk_sanpo_goodnight";
+        maid->add_effect( effect_littlemaid_goodnight, 12_hours, num_bp, false);
+    } else if( maid->has_effect( effect_littlemaid_in_kiss ) ) {
+        if( !one_in( 20 ) ){
+            return true;
+        }
+        if ( 70 < maid->get_effect_int( effect_happiness) ){
+            speech_id = "mon_little_maid_R18_milk_sanpo_in_kiss_int2";
+        } else if ( 30 < maid->get_effect_int( effect_happiness) ){
+            speech_id = "mon_little_maid_R18_milk_sanpo_in_kiss_int1";
+        } else {
+            speech_id = "mon_little_maid_R18_milk_sanpo_in_kiss";
+        }
+    } else if( maid->has_effect( effect_littlemaid_in_petting ) ) {
+        if( !one_in( 20 ) ){
+            return true;
+        }
+        if ( 70 < maid->get_effect_int( effect_comfortness) ){
+            speech_id = "mon_little_maid_R18_milk_sanpo_in_petting_int2";
+        } else if ( 30 < maid->get_effect_int( effect_comfortness) ){
+            speech_id = "mon_little_maid_R18_milk_sanpo_in_petting_int1";
+        } else {
+            speech_id = "mon_little_maid_R18_milk_sanpo_in_petting";
+        }
+    } else if( maid->has_effect( effect_littlemaid_in_service ) ) {
+        if( !one_in( 20 ) ){
+            return true;
+        }
+        if ( 70 < g->u.get_effect_int( effect_comfortness) ){
+            speech_id = "mon_little_maid_R18_milk_sanpo_in_service_int2";
+        } else if ( 30 < g->u.get_effect_int( effect_comfortness) ){
+            speech_id = "mon_little_maid_R18_milk_sanpo_in_service_int1";
+        } else {
+            speech_id = "mon_little_maid_R18_milk_sanpo_in_service";
+        }
+    } else if( maid->has_effect( effect_littlemaid_in_special ) ) {
+        if( !one_in( 20 ) ){
+            return true;
+        }
+        if ( 70 < maid->get_effect_int( effect_comfortness) ){
+            speech_id = "mon_little_maid_R18_milk_sanpo_in_special_int2";
+        } else if ( 30 < maid->get_effect_int( effect_comfortness) ){
+            speech_id = "mon_little_maid_R18_milk_sanpo_in_special_int1";
+        } else {
+            speech_id = "mon_little_maid_R18_milk_sanpo_in_special";
+        }
+    } else if( one_in( 3 ) && maid->has_effect( effect_ecstasy )) {
+        speech_id = "mon_little_maid_R18_milk_sanpo_in_ecstasy";
+    } else if( one_in( 3 ) ) {
+
+        // search nearest monster
+        Creature *target = nullptr;
+        int closest = maid->sight_range( default_daylight_level() );
+        for( monster &mons : g->all_monsters() ) {
+            if( mons.friendly != 0 ) {
+                continue;
+            }
+            const int dist = rl_dist_fast( maid->pos(), mons.pos() );
+            if( dist <= 0 ) {
+                continue;
+            }
+            if( dist >= closest ) {
+                continue;
+            }
+            if( !maid->sees( mons ) ) {
+                continue;
+            }
+            closest = dist;
+            target = &mons;
+        }
+
+        if( maid->get_hp() < maid->get_hp_max() && target != nullptr && rl_dist( maid->pos(), target->pos() ) < 3 ) {
+            speech_id = "mon_little_maid_R18_milk_sanpo_maid_in_attacked";
+        } else if( !g->u.activity.is_null() && !one_in( 20 ) ){
+            // reduce talk frequency at master is working
+            return true;
+        } else if( target != nullptr && one_in( 2 )){
+            // talk about saw monster
+            if( target->in_species( ZOMBIE )){
+                if(rl_dist( maid->pos(), target->pos() ) < 10 ){
+                    speech_id = "mon_little_maid_R18_milk_sanpo_saw_zombie_near";
+                } else {
+                    speech_id = "mon_little_maid_R18_milk_sanpo_saw_zombie_far";
+                }
+            } else if( target->in_species( FUNGUS )) {
+                speech_id = "mon_little_maid_R18_milk_sanpo_saw_fungus";
+            } else if( target->in_species( INSECT ) || target->in_species( SPIDER )) {
+                speech_id = "mon_little_maid_R18_milk_sanpo_saw_insect";
+            } else {
+                // other specie
+                return true;
+            }
+        } else if( one_in( 2 ) && std::none_of(g->u.worn.begin(), g->u.worn.end(), [](item it){
+            return it.covers( bp_leg_l ) || it.covers( bp_leg_r );}) ){
+            // player is not covering leg
+            speech_id = "mon_little_maid_R18_milk_sanpo_player_is_naked";
+        } else if ( one_in( 2 ) && maid->type->id.str() == "mon_little_maid_R18_milk_sanpo_altanate") {
+            speech_id = "mon_little_maid_R18_milk_sanpo_altanate";
+        } else {
+            speech_id = "mon_little_maid_R18_milk_sanpo";
+        }
+    } else if ( one_in( 2 ) && maid->has_effect( effect_littlemaid_wipe_liquid )) {
+        if( !g->m.has_flag( "LIQUIDCONT", maid->pos() )){
+            // wiping floor liquid
+            auto items = g->m.i_at( maid->pos() );
+            auto new_end = std::remove_if( items.begin(), items.end(), []( const item & it ) {
+                return it.made_of( LIQUID );
+            } );
+            bool is_maid_wiped = new_end != items.end();
+            while( new_end != items.end() ) {
+                new_end = items.erase( new_end );
+            }
+            if( is_maid_wiped ) {
+                speech_id = "mon_little_maid_R18_milk_sanpo_wiped_liquid_on_floor";
+            } else {
+                return true;
+            }
+        } else {
+            return true;
+        }
+    } else {
+        return true;
+    }
+
+    if( 0 < speech_id.size() ){
+        const SpeechBubble &speech = get_speech( speech_id );
+        sounds::sound( maid->pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
+                       false, "speech", maid->type->id.str() );
+        return true;
+    }
+
+    return false;
+}
+
+bool mattack::shoggothmaid_action( monster *maid )
+{
+
+    std::string speech_id = "";
+    if( maid->has_effect( effect_littlemaid_speak_off ) ) {
+        return true;
+    } else if ( !maid->sees( g->u ) ){
+        return true;
+    } else if( maid->has_effect( effect_littlemaid_goodnight ) ) {
+        if( g->u.in_sleep_state() ) {
+            return true;
+        } else {
+            speech_id = "mon_shoggoth_maid_goodmorning";
+            maid->remove_effect( effect_littlemaid_goodnight );
+        }
+    } else if( g->u.in_sleep_state() ) {
+        speech_id = "mon_shoggoth_maid_goodnight";
+        maid->add_effect( effect_littlemaid_goodnight, 12_hours, num_bp, false);
+    } else if( maid->has_effect( effect_littlemaid_in_kiss ) ) {
+        if( !one_in( 20 ) ){
+            return true;
+        }
+        if ( 70 < maid->get_effect_int( effect_happiness) ){
+            speech_id = "mon_shoggoth_maid_in_kiss_int2";
+        } else if ( 30 < maid->get_effect_int( effect_happiness) ){
+            speech_id = "mon_shoggoth_maid_in_kiss_int1";
+        } else {
+            speech_id = "mon_shoggoth_maid_in_kiss";
+        }
+    } else if( maid->has_effect( effect_littlemaid_in_petting ) ) {
+        if( !one_in( 20 ) ){
+            return true;
+        }
+        if ( 70 < maid->get_effect_int( effect_comfortness) ){
+            speech_id = "mon_shoggoth_maid_in_petting_int2";
+        } else if ( 30 < maid->get_effect_int( effect_comfortness) ){
+            speech_id = "mon_shoggoth_maid_in_petting_int1";
+        } else {
+            speech_id = "mon_shoggoth_maid_in_petting";
+        }
+    } else if( maid->has_effect( effect_littlemaid_in_service ) ) {
+        if( !one_in( 20 ) ){
+            return true;
+        }
+        if ( 70 < g->u.get_effect_int( effect_comfortness) ){
+            speech_id = "mon_shoggoth_maid_in_service_int2";
+        } else if ( 30 < g->u.get_effect_int( effect_comfortness) ){
+            speech_id = "mon_shoggoth_maid_in_service_int1";
+        } else {
+            speech_id = "mon_shoggoth_maid_in_service";
+        }
+    } else if( maid->has_effect( effect_littlemaid_in_special ) ) {
+        if( !one_in( 20 ) ){
+            return true;
+        }
+        if ( 70 < maid->get_effect_int( effect_comfortness) ){
+            speech_id = "mon_shoggoth_maid_in_special_int2";
+        } else if ( 30 < maid->get_effect_int( effect_comfortness) ){
+            speech_id = "mon_shoggoth_maid_in_special_int1";
+        } else {
+            speech_id = "mon_shoggoth_maid_in_special";
+        }
+    } else if( one_in( 3 ) && maid->has_effect( effect_ecstasy )) {
+        speech_id = "mon_shoggoth_maid_in_ecstasy";
+    } else if( one_in( 3 ) ) {
+        if( !g->u.activity.is_null() && !one_in( 20 ) ){
+            // reduce talk frequency at master is working
+            return true;
+        } else if( one_in( 2 ) && std::none_of(g->u.worn.begin(), g->u.worn.end(), [](item it){
+            return it.covers( bp_leg_l ) || it.covers( bp_leg_r );}) ){
+            // player is not covering leg
+            speech_id = "mon_shoggoth_maid_player_is_naked";
+        } else if ( one_in( 2 ) && maid->type->id.str() == "mon_shoggoth_maid_altanate") {
+            speech_id = "mon_shoggoth_maid_altanate";
+        } else {
+            speech_id = "mon_shoggoth_maid";
+        }
+    } else if ( one_in( 2 ) && maid->has_effect( effect_littlemaid_wipe_liquid )) {
+        if( !g->m.has_flag( "LIQUIDCONT", maid->pos() )){
+            // wiping floor liquid
+            auto items = g->m.i_at( maid->pos() );
+            auto new_end = std::remove_if( items.begin(), items.end(), []( const item & it ) {
+                return it.made_of( LIQUID );
+            } );
+            bool is_maid_wiped = new_end != items.end();
+            while( new_end != items.end() ) {
+                new_end = items.erase( new_end );
+            }
+            if( is_maid_wiped ) {
+                speech_id = "mon_shoggoth_maid_wiped_liquid_on_floor";
+            } else {
+                return true;
+            }
+        } else {
+            return true;
+        }
+    } else {
+        return true;
+    }
+
+    if( 0 < speech_id.size() ){
+        const SpeechBubble &speech = get_speech( speech_id );
+        sounds::sound( maid->pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
+                       false, "speech", maid->type->id.str() );
+        return true;
+    }
+
+    return false;
+}
+
+bool mattack::melee_bot( monster *bot )
+{
+    if( !bot->can_act() ) {
+        return false;
+    }
+
+    Creature *target = bot->attack_target();
+    if( target == nullptr || 3 < rl_dist( bot->pos(), target->pos() ) || !bot->sees( *target ) ) {
+        return false;
+    }
+
+    bot->moves -= 10;
+
+    bool uncanny = target->uncanny_dodge();
+    if( uncanny || dodge_check( bot, target ) ) {
+        bot->moves -= 10;
+        auto msg_type = target == &g->u ? m_warning : m_info;
+        target->add_msg_player_or_npc( msg_type,
+                _( "The %s attacks you, but you dodged it!" ),
+                _( "The %s attacks <npcname>, but they dodged it!" ),
+                bot->name() );
+        if( !uncanny ) {
+            target->on_dodge( bot, bot->type->melee_skill * 2 );
+        }
+        return true;
+    }
+
+    damage_type attack_type = DT_BASH;
+    std::string attack_name = _("bash attack");
+    if( one_in( 2 ) ) {
+         attack_type = DT_CUT;
+         attack_name = _("slash attack");
+    }
+    if( one_in( 7 ) ) {
+         attack_type = DT_ELECTRIC;
+         attack_name = _("shock attack");
+    }
+    int dam = rng( 10, 20 );
+
+    body_part hit = target->get_random_body_part();
+    dam = target->deal_damage( bot, hit, damage_instance( attack_type, dam ) ).total_damage();
+
+    if( dam > 0 ) {
+        auto msg_type = target == &g->u ? m_bad : m_info;
+        target->add_msg_player_or_npc( msg_type,
+                                       _( "The %1$s's %3$s hit your %2$s!" ),
+                                       _( "The %1$s's %3$s hit <npcname>'s %2$s!" ),
+                                       bot->name(),
+                                       body_part_name_accusative( hit ),
+                                       attack_name
+                                       );
+    } else {
+        target->add_msg_player_or_npc( _( "The %1$s's %3$s hit your %2$s, but it doesn't affect." ),
+                                       _( "The %1$s's %3$s hit <npcname>'s %2$s, but it doesn't affect." ),
+                                       bot->name(),
+                                       body_part_name_accusative( hit ),
+                                       attack_name
+                                       );
+    }
+    target->on_hit( bot, hit,  bot->type->melee_skill );
+
+    return true;
+}
+
+static Creature *get_dominating( const monster *z )
+{
+    Creature *wife = nullptr;
+    std::string str_dominating = z->get_value( "dominating" );
+    if( !str_dominating.empty() ) {
+        int dominating =  std::stoi( str_dominating );
+        wife = g->critter_by_id( character_id( dominating ) );
+    }
+
+    return wife;
+}
+
+static int get_random_wear( const player *target )
+{
+    std::list<int> list;
+    for( int i = -2; target->is_worn( target->i_at( i ) ); i--) {
+        list.push_back( i );
+    }
+    if( list.empty() ) {
+        return INT_MIN;
+    }
+    return random_entry( list );
+}
+
+bool mattack::stripu( monster *z )
+{
+    if( get_dominating( z ) != nullptr ) {
+        return false;
+    }
+
+    Creature *target = z->attack_target();
+    if( target == nullptr ) {
+        return false;
+    }
+
+    player *foe = dynamic_cast<player *>( target );
+    if( !is_adjacent( z, target, false ) || foe == nullptr || !z->sees( *target ) ) {
+        return false;
+    }
+    int i_pos = get_random_wear( foe );
+    if( i_pos == INT_MIN ) {
+        return false;
+    }
+    item &it = foe->i_at( i_pos );
+
+    z->mod_moves( -100 );
+
+    bool uncanny = target->uncanny_dodge();
+    if( uncanny || dodge_check( z, target ) ) {
+        target->add_msg_player_or_npc( _( "The %s tries to undress you, but you manage to dodge it!" ),
+                                       _( "The %s tries to undress <npcname>, but <npcname> manages to dodge it!" ),
+                                       z->name() );
+        if( !uncanny ) {
+            target->on_dodge( z, z->type->melee_skill * 2 );
+        }
+        return true;
+    }
+
+    if( it.volume() > 250_ml ) {
+        target->add_msg_player_or_npc( m_mixed,
+                                       _( "The %1$s quickly takes off your %2$s and drops it on the ground!" ),
+                                       _( "The %1$s quickly takes off <npcname>'s %2$s and drops it on the ground!" ),
+                                        z->name(),
+                                        it.display_name() );
+        g->m.add_item( z->pos(), it );
+    } else {
+        target->add_msg_player_or_npc( m_mixed,
+                                       _( "The %1$s takes off your %2$s and steals it!" ),
+                                       _( "The %1$s takes off <npcname>'s %2$s and steals it!" ),
+                                       z->name(),
+                                       it.display_name() );
+        z->add_item( it );
+    }
+
+    if( foe->has_item( it ) ) {
+        foe->i_rem( &it );
+    }
+
+    return true;
+}
+
+bool mattack::seduce( monster *z )
+{
+    Creature *target = z->attack_target();
+
+    if( get_option<bool>( "HENTAI_EXTEND" ) ) {
+        if( target == nullptr && z->has_effect( effect_cubi_allow_seduce_friendlyfire ) ){
+            target = &( g->u );
+        }
+    }
+
+    if( !is_adjacent( z, target, false ) || target == nullptr || !z->sees( *target ) ) {
+        return false;
+    }
+
+    z->mod_moves( -100 );
+
+    bool uncanny = target->uncanny_dodge();
+    if( uncanny || dodge_check( z, target ) ) {
+        target->add_msg_player_or_npc( _( "The %s tries to reach for you, but you manage to dodge it!" ),
+                                       _( "The %s tries to reach for <npcname>, but <npcname> manages to dodge it!" ),
+                                       z->name() );
+        if( !uncanny ) {
+            target->on_dodge( z, z->type->melee_skill * 2 );
+        }
+        return true;
+    }
+
+    target->add_msg_player_or_npc( m_mixed,
+                                   SNIPPET.random_from_category( "seduce_msg_player" ).value_or( translation() ),
+                                   SNIPPET.random_from_category( "seduce_msg_npc" ).value_or( translation() ),
+                                   z->name(),
+                                   SNIPPET.random_from_category( "hentai_bp" ).value_or( translation() ) );
+    target->gain_corrupt( rng( 1, 20 ), 100_turns );
+    target->add_effect( effect_lust, 4_turns );
+
+    if( get_option<bool>( "HENTAI_EXTEND" ) ) {
+        if( z->has_effect( effect_cubi_allow_seduce_friendlyfire ) ) {
+            // if extend is on and succubus is allowed friendlyfire, check going heaven like in wife_u
+            if( target->get_effect_int( effect_lust ) >= 100 ) {
+                target->add_msg_player_or_npc( m_info,
+                                               _( "You go to heaven!" ),
+                                               _( "<npcname> goes to heaven!" ) );
+                target->remove_effect( effect_lust );
+                target->mod_moves( -50 );
+                g->m.add_item( target->pos(), item( "h_body_fluids", calendar::turn ) );
+                // additional effect
+                target->add_effect( effect_went_heaven, 60_turns );
+            }
+        }
+    }
+    return true;
+}
+
+bool mattack::tkiss( monster *z )
+{
+    const float range = 10.0f;
+    Creature *target = sting_get_target( z, range );
+
+    if( get_option<bool>( "HENTAI_EXTEND" ) ) {
+        if( target == nullptr && z->has_effect( effect_cubi_allow_seduce_friendlyfire ) ){
+            if( z->sees( g->u ) && g->m.clear_path( z->pos(), g->u.pos(), range, 1, 100 ) ) {
+                target = &( g->u );
+            }
+        }
+    }
+
+    if( target == nullptr ) {
+        return false;
+    }
+
+    z->mod_moves( -50 );
+
+    // TODO: Use gun skill?
+    bool uncanny = target->uncanny_dodge();
+    if( uncanny || dodge_check( z, target ) ) {
+        target->add_msg_player_or_npc( _( "The %s tries to blow a kiss at you, but you manage to dodge it!" ),
+                                       _( "The %s tries to blow a kiss at <npcname>, but <npcname> manages to dodge it!" ),
+                                       z->name() );
+        if( !uncanny ) {
+            target->on_dodge( z, z->type->melee_skill * 2 );
+        }
+        return true;
+    }
+
+    target->add_msg_player_or_npc( m_mixed,
+                                   _( "The %s blows a kiss at you!" ),
+                                   _( "The %s blows a kiss at <npcname>!" ),
+                                   z->name() );
+    target->gain_corrupt( rng( 1, 20 ), 50_turns );
+    target->add_effect( effect_lust, 2_turns );
+
+    return true;
 }

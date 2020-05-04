@@ -195,6 +195,15 @@ void spellcasting_do_turn( player_activity *act, player *p );
 void study_spell_do_turn( player_activity *act, player *p );
 void read_do_turn( player_activity *act, player *p );
 void wait_stamina_do_turn( player_activity *act, player *p );
+void littlemaid_kiss_do_turn( player_activity *act, player *p );
+void littlemaid_petting_do_turn( player_activity *act, player *p );
+void littlemaid_service_do_turn( player_activity *act, player *p );
+void littlemaid_special_do_turn( player_activity *act, player *p );
+void excrete_do_turn( player_activity *act, player *p );
+void take_washlet_do_turn( player_activity *act, player *p );
+void take_shower_do_turn( player_activity *act, player *p );
+void hentai_play_with_do_turn( player_activity *act, player *p );
+void custom_activity_do_turn( player_activity *act, player *p );
 
 // defined in activity_handlers.cpp
 extern const std::map< activity_id, std::function<void( player_activity *, player * )> >
@@ -262,8 +271,18 @@ void mind_splicer_finish( player_activity *act, player *p );
 void hacking_finish( player_activity *act, player *p );
 void spellcasting_finish( player_activity *act, player *p );
 void study_spell_finish( player_activity *act, player *p );
+void littlemaid_kiss_finish( player_activity *act, player *p );
+void littlemaid_petting_finish( player_activity *act, player *p );
+void littlemaid_service_finish( player_activity *act, player *p );
+void littlemaid_special_finish( player_activity *act, player *p );
+void excrete_finish( player_activity *act, player *p );
+void take_washlet_finish( player_activity *act, player *p );
+void take_shower_finish( player_activity *act, player *p );
+void hentai_play_with_finish( player_activity *act, player *p );
+void custom_activity_finish( player_activity *act, player *p );
 
 void try_sleep_query( player_activity *act, player *p );
+int use_toilet_paper( player *p );
 
 // defined in activity_handlers.cpp
 extern const std::map< activity_id, std::function<void( player_activity *, player * )> >

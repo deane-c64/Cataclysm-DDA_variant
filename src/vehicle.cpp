@@ -3754,7 +3754,7 @@ bool vehicle::do_environmental_effects()
          * - The weather is any effect that would cause the player to be wet. */
         if( vp.part().blood > 0 && g->m.is_outside( vp.pos() ) ) {
             needed = true;
-            if( g->weather.weather >= WEATHER_LIGHT_DRIZZLE && g->weather.weather <= WEATHER_ACID_RAIN ) {
+            if( g->weather.weather >= WEATHER_LIGHT_DRIZZLE && g->weather.weather <= WEATHER_ACID_STORM ) {
                 vp.part().blood--;
             }
         }
@@ -5019,6 +5019,31 @@ void vehicle::idle( bool on_map )
     if( is_alarm_on ) {
         alarm();
     }
+
+    if( ftl_is_charging ) {
+        if( !ftl_pilot_is_manned() ) {
+            // is all controls is unmanned, stop ftl charge.
+            add_msg( m_bad, _("%s FTL charge stopped, It need at least one manned pirot control."), name);
+            ftl_is_charging = false;
+            ftl_charge_percentage = 0;
+        } else if( calendar::once_every( 36_seconds ) ) {
+            // 1 hour to full charge
+            if( ftl_charge_percentage < 100) {
+                ftl_charge_percentage += 1;
+                if ( ftl_charge_percentage == 25) {
+                    add_msg( m_info, _("%s FTL charge: %d%%"), name, ftl_charge_percentage);
+                } else if ( ftl_charge_percentage == 50) {
+                    add_msg( m_info, _("%s FTL charge: %d%%"), name, ftl_charge_percentage);
+                } else if ( ftl_charge_percentage == 75) {
+                    add_msg( m_info, _("%s FTL charge: %d%%"), name, ftl_charge_percentage);
+                } else if ( ftl_charge_percentage == 100) {
+                    add_msg( m_good, _("%s FTL charge complete! select destination at FTL drive menu."), name);
+                    sfx::play_variant_sound( "ftl", "charge_complete", 100 );
+                    ftl_is_charging = false;
+                }
+            }
+        }
+    }
 }
 
 void vehicle::on_move()
@@ -5331,9 +5356,13 @@ void vehicle::gain_moves()
 
     // turrets which are enabled will try to reload and then automatically fire
     // Turrets which are disabled but have targets set are a special case
-    for( auto e : turrets() ) {
-        if( e->enabled || e->target.second != e->target.first ) {
-            automatic_fire_turret( *e );
+    if ( lightmode_turret && !calendar::once_every( 1_minutes ) ) {
+        // skip turret process
+    } else {
+        for( auto e : turrets() ) {
+            if( e->enabled || e->target.second != e->target.first ) {
+                automatic_fire_turret( *e );
+            }
         }
     }
 
@@ -6525,3 +6554,17 @@ bool vehicle_part_with_feature_range<vpart_bitflags>::matches( const size_t part
            ( !( part_status_flag::available & required_ ) || vp.is_available() ) &&
            ( !( part_status_flag::enabled & required_ ) || vp.enabled );
 }
+
+/**
+ * at least one control is manned, return true.
+ */
+bool vehicle::ftl_pilot_is_manned(){
+    for( auto const &part : get_avail_parts( VPFLAG_CONTROLS ) ) {
+        player *passenger = part.get_passenger();
+        if( passenger ) {
+            return true;
+        }
+    }
+    return false;
+}
+

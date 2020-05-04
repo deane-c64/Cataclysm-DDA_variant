@@ -130,6 +130,7 @@ static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_tapeworm( "tapeworm" );
 static const efftype_id effect_weed_high( "weed_high" );
+static const efftype_id effect_took_shower( "took_shower" );
 
 static const trait_id trait_ACIDBLOOD( "ACIDBLOOD" );
 static const trait_id trait_ANTENNAE( "ANTENNAE" );
@@ -202,6 +203,7 @@ static const trait_id trait_ROOTS3( "ROOTS3" );
 static const trait_id trait_SAPIOVORE( "SAPIOVORE" );
 static const trait_id trait_SAVANT( "SAVANT" );
 static const trait_id trait_SEESLEEP( "SEESLEEP" );
+static const trait_id trait_SELFAWARE( "SELFAWARE" );
 static const trait_id trait_SHELL2( "SHELL2" );
 static const trait_id trait_SLIMESPAWNER( "SLIMESPAWNER" );
 static const trait_id trait_SLIMY( "SLIMY" );
@@ -406,6 +408,11 @@ void player::process_turn()
 
         //mask from scent altering items;
         norm_scent += mask_intensity;
+
+        // if player have took shower effect, halves scent.
+        if( has_effect( effect_took_shower ) ) {
+            norm_scent *= 0.5;
+        }
 
         // Scent increases fast at first, and slows down as it approaches normal levels.
         // Estimate it will take about norm_scent * 2 turns to go from 0 - norm_scent / 2
@@ -5812,3 +5819,37 @@ std::set<tripoint> player::get_path_avoid() const
 
     return ret;
 }
+
+std::pair<std::string, nc_color> player::get_excrete_description() const
+{
+    nc_color excrete_color;
+    std::string excrete_string;
+
+    if( has_trait( trait_SELFAWARE ) && get_excrete_need() > 0 ) {
+        excrete_string = string_format( "%d%%", get_excrete_need() / 10);
+    } else if( INCONTINENTING < get_excrete_need() ) {
+        excrete_string = _("Incontinenting");
+    } else if( PATIENTING < get_excrete_need() ) {
+        excrete_string = _("Patienting");
+    } else if( NEED_EXECRETE < get_excrete_need() ) {
+        excrete_string = _("Need excrete");
+    } else if( EXCRETETABLE < get_excrete_need() ) {
+        excrete_string = _("Excretable");
+    } else {
+        excrete_string = "";
+    }
+
+    if (INCONTINENTING < get_excrete_need()) {
+        excrete_color = c_red;
+    } else if (PATIENTING < get_excrete_need()) {
+        excrete_color = c_light_red;
+    } else if (NEED_EXECRETE < get_excrete_need()) {
+        excrete_color = c_yellow;
+    } else if (EXCRETETABLE < get_excrete_need()) {
+        excrete_color = c_dark_gray;
+    } else {
+        excrete_color = c_dark_gray;
+    }
+    return std::make_pair( excrete_string, excrete_color );
+}
+

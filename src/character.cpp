@@ -137,6 +137,9 @@ static const efftype_id effect_took_xanax( "took_xanax" );
 static const efftype_id effect_webbed( "webbed" );
 static const efftype_id effect_winded( "winded" );
 
+// for hentai mod
+static const efftype_id effect_corrupt( "corrupt" );
+
 static const trait_id trait_ACIDBLOOD( "ACIDBLOOD" );
 static const trait_id trait_ACIDPROOF( "ACIDPROOF" );
 static const trait_id trait_ADRENALINE( "ADRENALINE" );
@@ -323,6 +326,8 @@ Character::Character() :
     thirst = 0;
     fatigue = 0;
     sleep_deprivation = 0;
+    excrete_need = 0;
+    excrete_amount = 0;
     set_rad( 0 );
     tank_plut = 0;
     reactor_plut = 0;
@@ -3949,6 +3954,42 @@ int Character::get_sleep_deprivation() const
     return sleep_deprivation;
 }
 
+void Character::set_excrete_amount( int nexcrete )
+{
+    if( excrete_amount != nexcrete ) {
+        excrete_amount = nexcrete;
+        on_stat_change( "excrete_amount", excrete_amount );
+    }}
+
+
+void Character::mod_excrete_amount( int nexcrete )
+{
+    set_excrete_amount( excrete_amount + nexcrete );
+}
+
+int Character::get_excrete_amount() const
+{
+    return excrete_amount;
+}
+
+void Character::set_excrete_need( int nexcrete )
+{
+    if( excrete_need != nexcrete ) {
+        excrete_need = nexcrete;
+        on_stat_change( "excrete_need", excrete_amount );
+    }
+}
+
+void Character::mod_excrete_need( int nexcrete )
+{
+    set_excrete_need( excrete_need + nexcrete );
+}
+
+int Character::get_excrete_need() const
+{
+    return excrete_need;
+}
+
 std::pair<std::string, nc_color> Character::get_pain_description() const
 {
     const std::pair<std::string, nc_color> pain = Creature::get_pain_description();
@@ -4227,6 +4268,10 @@ void Character::update_stomach( const time_point &from, const time_point &to )
         if( !is_npc() || !get_option<bool>( "NO_NPC_FOOD" ) ) {
             mod_stored_kcal( digested_to_body.nutr.kcal );
             vitamins_mod( digested_to_body.nutr.vitamins, false );
+            // increase excrement amount
+            if( !is_npc() && get_option<bool>( "EXCREMENT_FEATURE" ) ){
+                mod_excrete_amount( units::to_milliliter<int>( digested_to_body.solids ) / 4 + units::to_milliliter<int>( digested_to_body.water ) / 8 );
+            }
         }
     }
     if( stomach.time_since_ate() > 10_minutes ) {
@@ -4389,6 +4434,18 @@ void Character::update_needs( int rate_multiplier )
 
     if( get_painkiller() > 0 ) {
         mod_painkiller( -std::min( get_painkiller(), rate_multiplier ) );
+    }
+
+    if( is_player() ) {
+        if( 500 < get_excrete_amount() ) {
+            if( asleep ){
+                int excrete_delta = (get_excrete_amount() / 144 ) * rate_multiplier;
+                mod_excrete_need( excrete_delta );
+            } else {
+                int excrete_delta = (get_excrete_amount() / 72 ) * rate_multiplier;
+                mod_excrete_need( excrete_delta );
+            }
+        }
     }
 
     // Huge folks take penalties for cramming themselves in vehicles
@@ -4684,6 +4741,44 @@ void Character::check_needs_extremes()
 
         }
     }
+
+    // excrete mess
+    if( is_player() ) {
+        if( PATIENTING < get_excrete_need() ){
+            if( calendar::once_every( 30_minutes ) ) {
+                if( INCONTINENTED < get_excrete_need()) {
+                    g->m.spawn_item( pos(), "feces_human", 1, get_excrete_amount() / 125, calendar::turn , 0);
+                    set_excrete_need( 0 );
+                    set_excrete_amount( 0 );
+
+                    bool is_any_gear_be_filthy = false;
+
+                    for( auto &i : worn ) {
+                        if( i.covers( bp_leg_l ) || i.covers( bp_leg_r ) ) {
+                            i.item_tags.insert( "FILTHY" );
+                            morale->on_worn_item_be_filthy(i);
+                            is_any_gear_be_filthy = true;
+                        }
+                    }
+
+                    if( is_any_gear_be_filthy ) {
+                        add_msg_if_player( m_bad, _( "You could not in time." ) );
+                        add_morale( MORALE_INCONTINENT, -20, -40 );
+                    } else {
+                        add_msg_if_player( m_good, _( "You could not in time, but you did not wearing any pants, so It feeling good!" ) );
+                        add_morale( MORALE_INCONTINENT, 20, 40 );
+                    }
+                } else if( INCONTINENTING < get_excrete_need()) {
+                    add_msg_if_player( m_warning,
+                            _( "You need take a crap immidiately." ) );
+                } else {
+                    add_msg_if_player( m_neutral,
+                            _( "You need excrete." ) );
+                }
+            }
+        }
+    }
+
 }
 
 void Character::get_sick()
@@ -7791,6 +7886,12 @@ bool Character::armor_absorb( damage_unit &du, item &armor )
     // TODO: add some check for power armor
     armor.mitigate_damage( du );
 
+    // attacked armor lose fragrant
+    static const std::string fragrant( "FRAGRANT" );
+    if(armor.item_tags.erase( fragrant )){
+        apply_fragrant_morale();
+    }
+
     // We want armor's own resistance to this type, not the resistance it grants
     const int armors_own_resist = armor.damage_resist( du.type, true );
     if( armors_own_resist > 1000 ) {
@@ -8374,7 +8475,53 @@ void Character::apply_persistent_morale()
             rem_morale( MORALE_PERM_FPMODE_ON );
         }
     }
+
+    apply_fragrant_morale();
+
 }
+
+void Character::apply_fragrant_morale()
+{
+    int bonus = 0;
+    static const std::string fragrant( "FRAGRANT" );
+    for( const auto armor : worn ){
+        if( armor.item_tags.count( fragrant ) ){
+            bonus += 1;
+            if( armor.covers( bp_head ) ){
+                bonus += 1;
+            }
+            if( armor.covers( bp_eyes ) ){
+                bonus += 1;
+            }
+            if( armor.covers( bp_mouth ) ){
+                bonus += 4;
+            }
+            if( armor.covers( bp_torso ) ){
+                bonus += 2;
+            }
+            if( armor.covers( bp_arm_l ) ){
+                bonus += 1;
+            }
+            if( armor.covers( bp_arm_r ) ){
+                bonus += 1;
+            }
+            if( armor.covers( bp_hand_l ) ){
+                bonus += 1;
+            }
+            if( armor.covers( bp_hand_r ) ){
+                bonus += 1;
+            }
+        }
+    }
+    bonus = std::min(bonus / 2, 20);
+
+    if( 0 < bonus ) {
+        add_morale( MORALE_PERM_FRAGRANT, bonus, bonus, 1_minutes, 1_minutes, true );
+    } else {
+        rem_morale( MORALE_PERM_FRAGRANT );
+    }
+}
+
 
 int Character::get_morale_level() const
 {
@@ -9039,5 +9186,15 @@ void Character::use_fire( const int quantity )
     } else if( has_bionic( bio_laser ) && get_power_level() > quantity * 5_kJ ) {
         mod_power_level( -quantity * 5_kJ );
         return;
+    }
+}
+
+void Character::gain_corrupt( int intensity, const time_duration &dur )
+{
+    if( intensity > int_cur ) {
+        add_effect( effect_corrupt, dur );
+    } else {
+        add_msg_player_or_npc( _( "However you successfully resist the temptation!" ),
+                               _( "However <npcname> successfully resists the temptation!" ) );
     }
 }

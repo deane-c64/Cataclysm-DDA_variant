@@ -186,3 +186,17 @@ Xcode/
 /.flatpak-builder/
 /repo/
 /build-dir/
+
+# ignore for Variant JP
+
+# Mods
+/data/mods/Battle_Maid/*
+/data/mods/Littlemaid_For_Variant/*
+/data/mods/Vibrator_Junkyard/*
+/data/mods/_mod_test/*
+
+# language
+/lang/po/ja_variant.po
+
+# tiles
+/gfx/*

@@ -14,6 +14,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <chrono>
 
 #include "action.h"
 #include "advanced_inv.h"
@@ -96,6 +97,9 @@
 #include "game_constants.h"
 #include "point.h"
 #include "weather.h"
+#include "speech.h"
+#include "custom_activity.h"
+#include "options.h"
 
 #define dbg(x) DebugLog((x),D_GAME) << __FILE__ << ":" << __LINE__ << ": "
 
@@ -197,6 +201,17 @@ static const activity_id ACT_WAIT_STAMINA( "ACT_WAIT_STAMINA" );
 static const activity_id ACT_WAIT_WEATHER( "ACT_WAIT_WEATHER" );
 static const activity_id ACT_WASH( "ACT_WASH" );
 static const activity_id ACT_WEAR( "ACT_WEAR" );
+static const activity_id ACT_LITTLEMAID_KISS("ACT_LITTLEMAID_KISS");
+static const activity_id ACT_LITTLEMAID_PETTING("ACT_LITTLEMAID_PETTING");
+static const activity_id ACT_LITTLEMAID_SERVICE("ACT_LITTLEMAID_SERVICE");
+static const activity_id ACT_LITTLEMAID_SPECIAL("ACT_LITTLEMAID_SPECIAL");
+static const activity_id ACT_TAKE_WASHLET("ACT_TAKE_WASHLET");
+static const activity_id ACT_EXCRETE("ACT_EXCRETE");
+static const activity_id ACT_TAKE_SHOWER("ACT_TAKE_SHOWER");
+static const activity_id ACT_CUSTOM_ACTIVITY("ACT_CUSTOM_ACTIVITY");
+
+// for hentai
+static const activity_id ACT_HENTAI_PLAY_WITH( "ACT_HENTAI_PLAY_WITH" );
 
 static const efftype_id effect_blind( "blind" );
 static const efftype_id effect_controlled( "controlled" );
@@ -205,6 +220,31 @@ static const efftype_id effect_pet( "pet" );
 static const efftype_id effect_sleep( "sleep" );
 static const efftype_id effect_tied( "tied" );
 static const efftype_id effect_under_op( "under_operation" );
+
+// littlemaid order state
+const efftype_id effect_littlemaid_stay( "littlemaid_stay" );
+const efftype_id effect_littlemaid_speak_off( "littlemaid_speak_off" );
+const efftype_id effect_littlemaid_goodnight( "littlemaid_goodnight" );
+
+// littlemaid play state
+const efftype_id effect_littlemaid_in_kiss( "littlemaid_in_kiss" );
+const efftype_id effect_littlemaid_in_petting( "littlemaid_in_petting" );
+const efftype_id effect_littlemaid_in_service( "littlemaid_in_service" );
+const efftype_id effect_littlemaid_in_special( "littlemaid_in_special" );
+
+// littlemaid playing status effect
+const efftype_id effect_happiness( "happiness" );
+const efftype_id effect_comfortness( "comfortness" );
+const efftype_id effect_ecstasy( "ecstasy" );
+const efftype_id effect_maid_fatigue( "maid_fatigue" );
+
+const efftype_id effect_took_shower( "took_shower" );
+const efftype_id effect_bind_by_custom_activity( "effect_bind_by_custom_activity" );
+const efftype_id effect_cooldown_of_custom_activity( "effect_cooldown_of_custom_activity" );
+
+// for hentai
+const efftype_id effect_movingdoing( "movingdoing" );
+const efftype_id effect_lust( "lust" );
 
 static const zone_type_id zone_type_FARM_PLOT( "FARM_PLOT" );
 
@@ -248,6 +288,7 @@ static const std::string flag_BUTCHER_EQ( "BUTCHER_EQ" );
 static const std::string flag_EATEN_COLD( "EATEN_COLD" );
 static const std::string flag_FIELD_DRESS( "FIELD_DRESS" );
 static const std::string flag_FIELD_DRESS_FAILED( "FIELD_DRESS_FAILED" );
+static const std::string flag_FILTHY( "FILTHY" );
 static const std::string flag_FISH_GOOD( "FISH_GOOD" );
 static const std::string flag_FISH_POOR( "FISH_POOR" );
 static const std::string flag_FORAGE_HALLU( "FORAGE_HALLU" );
@@ -268,6 +309,7 @@ static const std::string flag_SKINNED( "SKINNED" );
 static const std::string flag_SPEEDLOADER( "SPEEDLOADER" );
 static const std::string flag_SUPPORTS_ROOF( "SUPPORTS_ROOF" );
 static const std::string flag_TREE( "TREE" );
+static const std::string flag_TOILETPAPER( "TOILETPAPER" );
 
 using namespace activity_handlers;
 
@@ -339,8 +381,19 @@ activity_handlers::do_turn_functions = {
     { ACT_TREE_COMMUNION, tree_communion_do_turn },
     { ACT_STUDY_SPELL, study_spell_do_turn},
     { ACT_READ, read_do_turn},
-    { ACT_WAIT_STAMINA, wait_stamina_do_turn }
+    { ACT_WAIT_STAMINA, wait_stamina_do_turn },
+    { ACT_LITTLEMAID_KISS, littlemaid_kiss_do_turn },
+    { ACT_LITTLEMAID_PETTING, littlemaid_petting_do_turn },
+    { ACT_LITTLEMAID_SERVICE, littlemaid_service_do_turn },
+    { ACT_LITTLEMAID_SPECIAL, littlemaid_special_do_turn },
+    { ACT_TAKE_SHOWER, take_shower_do_turn },
+    { ACT_TAKE_WASHLET, take_washlet_do_turn },
+    { ACT_EXCRETE, excrete_do_turn },
+    { ACT_CUSTOM_ACTIVITY, custom_activity_do_turn },
+    { ACT_HENTAI_PLAY_WITH, hentai_play_with_do_turn }
 };
+
+
 
 const std::map< activity_id, std::function<void( player_activity *, player * )> >
 activity_handlers::finish_functions = {
@@ -412,7 +465,16 @@ activity_handlers::finish_functions = {
     { ACT_MIND_SPLICER, mind_splicer_finish },
     { ACT_HACKING, hacking_finish },
     { ACT_SPELLCASTING, spellcasting_finish },
-    { ACT_STUDY_SPELL, study_spell_finish }
+    { ACT_STUDY_SPELL, study_spell_finish },
+    { ACT_LITTLEMAID_KISS, littlemaid_kiss_finish },
+    { ACT_LITTLEMAID_PETTING, littlemaid_petting_finish },
+    { ACT_LITTLEMAID_SERVICE, littlemaid_service_finish },
+    { ACT_LITTLEMAID_SPECIAL, littlemaid_special_finish },
+    { ACT_TAKE_SHOWER, take_shower_finish },
+    { ACT_TAKE_WASHLET, take_washlet_finish },
+    { ACT_EXCRETE, excrete_finish },
+    { ACT_CUSTOM_ACTIVITY, custom_activity_finish },
+    { ACT_HENTAI_PLAY_WITH, hentai_play_with_finish }
 };
 
 bool activity_handlers::resume_for_multi_activities( player &p )
@@ -3189,6 +3251,14 @@ void activity_handlers::read_finish( player_activity *act, player *p )
 void activity_handlers::wait_finish( player_activity *act, player *p )
 {
     p->add_msg_if_player( _( "You finish waiting." ) );
+
+    std::chrono::system_clock::time_point end_time = std::chrono::system_clock::now();
+
+      double elapsed_seconds =
+              static_cast<double>(
+                      std::chrono::duration_cast<std::chrono::milliseconds>(end_time - p->start_time).count() / 1000.0);
+    p->add_msg_if_player( _( "Time elapsed: %.2fsec" ), elapsed_seconds );
+
     act->set_to_null();
 }
 
@@ -4871,3 +4941,648 @@ void activity_handlers::mind_splicer_finish( player_activity *act, player *p )
     data_card.contents.clear();
     data_card.put_in( item( "mind_scan_robofac" ) );
 }
+
+int activity_handlers::use_toilet_paper( player *p ) {
+    // search paper
+    std::vector<const std::list<item> *> paper_list;
+    // std::vector<const std::list<item> *>
+    const_invslice inventory = g->u.inv.const_slice();
+
+    int paper_morale = 0;
+
+    // can use to toiletpaper item: material is paper, volume between 0.10L to 0.50L, not filthy
+    for( const std::list<item> *itemstack : inventory ){
+        auto item = itemstack->front();
+        if( !item.has_flag( flag_FILTHY ) &&
+            (
+                item.has_flag( flag_TOILETPAPER ) ||
+                (
+                    item.made_of( material_id( "paper" )) &&
+                    item.volume( false ) <= units::from_milliliter<int>( 500 ) &&
+                    units::from_milliliter<int>( 100 ) <= item.volume( false )
+                )
+            )
+        ){
+            paper_list.push_back( itemstack );
+        }
+    }
+
+    if( paper_list.size() == 0) {
+        // dont have paper
+        return paper_morale;
+    }
+    // paper select menu
+    uilist amenu;
+    const int SELECT_NOT_USE_PAPER = -99;
+    amenu.text = string_format( _( "use paper?" ) );
+    amenu.addentry( SELECT_NOT_USE_PAPER , true, '0', _( "not use paper" ));
+
+    for(long long unsigned int i = 0 ; i < paper_list.size() ; i++) {
+        item item = paper_list.at(i)->front();
+        amenu.addentry( i , true, -1 , item.tname());
+    }
+    amenu.query();
+    int choice = amenu.ret;
+
+    if( 0 <= choice ){
+        const item *using_paper = &(paper_list.at(choice)->front());
+        item used_paper = g->u.inv.remove_item(using_paper);
+        used_paper.set_flag( flag_FILTHY );
+        put_into_vehicle_or_drop(*p, item_drop_reason::tumbling, { used_paper });
+
+        paper_morale = 10;
+
+        // process specific toilet paper item status
+        /// XXX ignore below minus 200 million to avoid probably INT_MIN when value was unset
+        if( used_paper.type->toiletpaper_morale != 0 && -200000000 < used_paper.type->toiletpaper_morale){
+            paper_morale += used_paper.type->toiletpaper_morale;
+        }
+        if( !used_paper.type->toiletpaper_message.empty()){
+            if( paper_morale < 10 ){
+                p->add_msg_if_player( m_bad,  used_paper.type->toiletpaper_message );
+            } else if( paper_morale == 10 ){
+                p->add_msg_if_player( m_neutral,  used_paper.type->toiletpaper_message );
+            } else {
+                p->add_msg_if_player( m_good,  used_paper.type->toiletpaper_message  );
+            }
+        }
+        p->add_morale( MORALE_USE_TOILETPAPER, paper_morale, paper_morale * 2, 180_minutes );
+    } else {
+
+    }
+    return paper_morale;
+}
+
+void activity_handlers::take_washlet_do_turn( player_activity *act, player *p ){
+    (void)act;
+    (void)p;
+}
+
+void activity_handlers::take_washlet_finish( player_activity *act, player *p ){
+    p->add_msg_if_player( m_good, _( "You used washlet." ) );
+    p->add_morale( MORALE_TAKE_WASHLET, 10, 20, 180_minutes );
+
+    use_toilet_paper(p);
+
+    act->set_to_null();
+}
+
+void activity_handlers::excrete_do_turn( player_activity *act, player *p ){
+    (void)act;
+    (void)p;
+    if( calendar::once_every( 5_minutes ) ) {
+        // say some messages?
+    }
+}
+
+void activity_handlers::excrete_finish( player_activity *act, player *p ){
+
+    act->set_to_null();
+
+    if( EXCRETETABLE < p->get_excrete_need() ) {
+
+        int morale_delta = 5;
+        bool isOnTheToilet = g->m.has_flag_ter_or_furn("TOILET", p->pos()) || g->m.veh_at(p->pos()).part_with_feature("TOILET", true);
+
+        item unchi( "feces_human", calendar::turn );
+        unchi.charges = p->get_excrete_amount() / 125;
+
+        p->set_excrete_need( 0 );
+        p->set_excrete_amount( 0 );
+
+        put_into_vehicle_or_drop(*p, item_drop_reason::tumbling, { unchi });
+
+        if( isOnTheToilet ){
+            // on the toilet do twice morale
+            p->add_msg_if_player( m_good, _( "you execrete to toilet." ) );
+            p->add_morale( MORALE_EXCRETE, morale_delta * 2, morale_delta * 2, 180_minutes, 120_minutes);
+        } else {
+            p->add_msg_if_player( m_good, _( "you finish execrete." ) );
+            p->add_morale( MORALE_EXCRETE, morale_delta, morale_delta, 180_minutes, 120_minutes);
+        }
+
+        bool use_washlet = false;
+        // you can use washlet even could not excrete
+        optional_vpart_position part_at_player = g->m.veh_at(p->pos());
+        if( part_at_player.part_with_feature("WASHLET", true) ) {
+            if( part_at_player->vehicle().is_available_washlet_resource() ) {
+                if (query_yn( _("use washlet?") ) ){
+                    use_washlet = true;
+                }
+            }
+        }
+        if( use_washlet ){
+            part_at_player->vehicle().consume_washlet_resource();
+            g->u.assign_activity(player_activity(activity_id( "ACT_TAKE_WASHLET" ),
+                    to_moves<int>( 1_minutes ) , -1, 0, "taking washlet"));
+        } else {
+            use_toilet_paper(p);
+        }
+
+    } else {
+        p->add_msg_if_player( m_neutral, _( "you could not execrete." ) );
+    }
+}
+
+
+static void littlemaid_ecstasy_check( player *p, shared_ptr_fast<monster> maid){
+
+    // int player_h = p->   get_effect_int(effect_happiness  , num_bp);
+    int player_c = p->   get_effect_int(effect_comfortness, num_bp);
+    int maid_h   = maid->get_effect_int(effect_happiness  , num_bp);
+    int maid_c   = maid->get_effect_int(effect_comfortness, num_bp);
+    int maid_f   = maid->get_effect_int(effect_maid_fatigue, num_bp);
+
+    bool player_ecstacy = 99 <= player_c;
+    bool maid_ecstacy   = 99 <= maid_c;
+
+    p->add_morale( MORALE_PLAY_WITH_LITTLEMAID, 10, 50 , 60_minutes, 30_minutes);
+
+    if( player_ecstacy && maid_ecstacy ) {
+        p->add_msg_if_player( m_good, _( "You and Maid are raised up ecstacy at the moment!" ) );
+        p->remove_effect(effect_comfortness,  num_bp);
+        p->add_effect(effect_ecstasy, 1_minutes, num_bp);
+        p->mod_fatigue( 50 );
+        p->add_morale( MORALE_ECSTASY, 50, 50 , 120_minutes, 60_minutes);
+
+        maid->remove_effect(effect_comfortness,  num_bp);
+        maid->add_effect(effect_ecstasy, 1_minutes, num_bp);
+        maid->add_effect(effect_maid_fatigue, 150_minutes, num_bp);
+
+        int mp_amount = maid->get_effect_int(effect_happiness, num_bp);
+        mp_amount = rng(mp_amount * 2, mp_amount * 3);
+        p->add_msg_if_player( m_good, _( "%d maid points produced." ), mp_amount );
+        item mp( "maid_point", calendar::turn );
+        mp.charges = mp_amount;
+        p->i_add_or_drop(mp);
+
+        if( maid->has_flag( MF_LITTLE_MAID ) ){
+            const SpeechBubble &speech = get_speech( "mon_little_maid_R18_milk_sanpo_ecstasy_together" );
+            sounds::sound( maid->pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
+                           false, "speech", maid->type->id.str() );
+        } else if( maid->has_flag( MF_SHOGGOTH_MAID ) ){
+            const SpeechBubble &speech = get_speech( "mon_shoggoth_maid_ecstasy_together" );
+            sounds::sound( maid->pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
+                           false, "speech", maid->type->id.str() );
+        }
+
+        if( maid->has_flag( MF_SHOGGOTH_MAID ) && one_in( 5 ) ) {
+            // lay egg
+            const SpeechBubble &speech = get_speech( "mon_shoggoth_maid_lay_egg" );
+            sounds::sound( maid->pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
+                           false, "speech", maid->type->id.str() );
+
+            p->add_msg_if_player( m_good, _( "Shoggoth maid laid egg!" ), mp_amount );
+            item shoggoth_egg( "egg_shoggoth", calendar::turn );
+            shoggoth_egg.charges = 1;
+            p->i_add_or_drop(shoggoth_egg);
+        }
+
+    } else if(player_ecstacy) {
+        p->add_msg_if_player( m_good, _( "You raised up ecstacy!" ) );
+        p->remove_effect(effect_comfortness,  num_bp);
+        p->add_effect(effect_ecstasy, 1_minutes, num_bp);
+        p->mod_fatigue( 50 );
+        p->add_morale( MORALE_ECSTASY, 50, 50 , 120_minutes, 60_minutes);
+
+        if( maid->has_flag( MF_LITTLE_MAID ) ){
+            const SpeechBubble &speech = get_speech( "mon_little_maid_R18_milk_sanpo_player_ecstasy" );
+            sounds::sound( maid->pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
+                           false, "speech", maid->type->id.str() );
+        } else if( maid->has_flag( MF_SHOGGOTH_MAID ) ){
+            const SpeechBubble &speech = get_speech( "mon_shoggoth_maid_player_ecstasy" );
+            sounds::sound( maid->pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
+                           false, "speech", maid->type->id.str() );
+        }
+
+    } else if(maid_ecstacy) {
+        p->add_msg_if_player( m_good, _( "Maid raised up ecstacy!" ) );
+        maid->remove_effect(effect_comfortness,  num_bp);
+        maid->add_effect(effect_ecstasy, 1_minutes, num_bp);
+        maid->add_effect(effect_maid_fatigue, 150_minutes, num_bp);
+
+        int mp_amount = maid->get_effect_int(effect_happiness, num_bp);
+        mp_amount = rng(mp_amount / 3, mp_amount / 2);
+        p->add_msg_if_player( m_good, _( "%d maid points produced." ), mp_amount );
+        item mp( "maid_point", calendar::turn );
+        mp.charges = mp_amount;
+        p->i_add_or_drop(mp);
+
+        if( maid->has_flag( MF_LITTLE_MAID ) ){
+            const SpeechBubble &speech = get_speech( "mon_little_maid_R18_milk_sanpo_ecstasy_cry" );
+            sounds::sound( maid->pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
+                           false, "speech", maid->type->id.str() );
+        } else if( maid->has_flag( MF_SHOGGOTH_MAID ) ){
+            const SpeechBubble &speech = get_speech( "mon_shoggoth_maid_ecstasy_cry" );
+            sounds::sound( maid->pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
+                           false, "speech", maid->type->id.str() );
+        }
+
+    } else {
+        std::string hint = "";
+        if( 30 < maid_f && rng(1, maid_c * 2 + maid_h) < rng(1, maid_f) ){
+            if( 50 < maid_f) {
+                hint = "%s seems tired.";
+            } else {
+                hint = "%s seems pretty tired.";
+            }
+        } else if( rng(1, maid_c * 3) < rng(1, maid_h) ){
+            if( 80 < maid_h ){
+                hint = "%s seems happiest.";
+            } else if( 50 < maid_h ){
+                hint = "%s seems so happy.";
+            } else if( 30 < maid_h ){
+                hint = "%s seems happy.";
+            }
+        } else {
+            if( 80 < maid_c ){
+                hint = "%s seems near ecstacy.";
+            } else if( 50 < maid_c ){
+                hint = "%s seems in very comfort.";
+            } else if( 30 < maid_c ){
+                hint = "%s seems in comfort.";
+            }
+        }
+        if( 0 < hint.size()) {
+            p->add_msg_if_player( m_neutral, _( hint ), maid->name() );
+        }
+    }
+}
+
+void activity_handlers::littlemaid_kiss_do_turn( player_activity *act, player *p ){
+    (void)p;
+    if( calendar::once_every( 10_seconds ) ) {
+        shared_ptr_fast<monster> maid = act->monsters[0].lock();
+        maid->add_effect( effect_littlemaid_in_kiss, 20_seconds, num_bp);
+    }
+
+}
+void activity_handlers::littlemaid_kiss_finish( player_activity *act, player *p ){
+    shared_ptr_fast<monster> maid = act->monsters[0].lock();
+    p->add_msg_if_player( m_good, _( "You finished kissing with %s." ), maid->name() );
+
+    int player_h = p->   get_effect_int(effect_happiness  , num_bp);
+    int player_c = p->   get_effect_int(effect_comfortness, num_bp);
+    int maid_h   = maid->get_effect_int(effect_happiness  , num_bp);
+    int maid_c   = maid->get_effect_int(effect_comfortness, num_bp);
+    int maid_f   = maid->get_effect_int(effect_maid_fatigue, num_bp);
+
+    int player_h_mod = 30 * 100 / ( 100 + maid_f);
+    int player_c_mod = 1  * 100 / ( 100 + maid_f);
+    int maid_h_mod   = 35 * 100 / ( 100 + maid_f);
+    int maid_c_mod   = 1  * 100 / ( 100 + maid_f);
+
+    player_h_mod = rng(player_h_mod * 8 / 10, player_h_mod);
+    player_c_mod = rng(player_c_mod * 8 / 10, player_c_mod);
+    maid_h_mod   = rng(maid_h_mod   * 8 / 10, maid_h_mod);
+    maid_c_mod   = rng(maid_c_mod   * 8 / 10, maid_c_mod);
+
+    p->add_effect(    effect_happiness  , player_h_mod * 1_minutes );
+    p->add_effect(    effect_comfortness, player_c_mod * 1_minutes );
+    maid->add_effect( effect_happiness  , maid_h_mod   * 1_minutes );
+    maid->add_effect( effect_comfortness, maid_c_mod   * 1_minutes );
+
+    add_msg( m_debug, _("Player h: %2d+%2d=%2d c:%2d+%2d=%2d"),
+            player_h,player_h_mod,p->get_effect_int(effect_happiness  , num_bp),
+            player_c,player_c_mod,p->get_effect_int(effect_comfortness, num_bp));
+    add_msg( m_debug, _("Maid   h: %2d+%2d=%2d c:%2d+%2d=%2d"),
+            maid_h,maid_h_mod,maid->get_effect_int(effect_happiness  , num_bp),
+            maid_c,maid_c_mod,maid->get_effect_int(effect_comfortness, num_bp));
+
+    littlemaid_ecstasy_check(p, maid);
+    act->set_to_null();
+}
+void activity_handlers::littlemaid_petting_do_turn( player_activity *act, player *p ){
+    (void)p;
+    if( calendar::once_every( 10_seconds ) ) {
+        shared_ptr_fast<monster> maid = act->monsters[0].lock();
+        maid->add_effect( effect_littlemaid_in_petting, 20_seconds, num_bp);
+    }
+
+}
+void activity_handlers::littlemaid_petting_finish( player_activity *act, player *p ){
+    shared_ptr_fast<monster> maid = act->monsters[0].lock();
+    p->add_msg_if_player( m_good, _( "You finished petting with %s." ), maid->name() );
+
+    int player_h = p->   get_effect_int(effect_happiness  , num_bp);
+    int player_c = p->   get_effect_int(effect_comfortness, num_bp);
+    int maid_h   = maid->get_effect_int(effect_happiness  , num_bp);
+    int maid_c   = maid->get_effect_int(effect_comfortness, num_bp);
+    int maid_f   = maid->get_effect_int(effect_maid_fatigue, num_bp);
+
+    int player_h_mod = 5 + 10 * (100 - player_h) / 100 * (100 - maid_f) / 100;
+    int player_c_mod = 1                               * (100 - maid_f) / 100;
+    int maid_h_mod   = 10 + 15 * (100 - maid_h)   / 100 * (100 - maid_f) / 100;
+    int maid_c_mod   = 15 + 40 * maid_h / 100          * (100 - maid_f) / 100;
+
+    player_h_mod = rng(player_h_mod * 8 / 10, player_h_mod);
+    player_c_mod = rng(player_c_mod * 8 / 10, player_c_mod);
+    maid_h_mod   = rng(maid_h_mod   * 8 / 10, maid_h_mod);
+    maid_c_mod   = rng(maid_c_mod   * 8 / 10, maid_c_mod);
+
+    p->add_effect(    effect_happiness  , player_h_mod * 1_minutes );
+    p->add_effect(    effect_comfortness, player_c_mod * 1_minutes );
+    maid->add_effect( effect_happiness  , maid_h_mod   * 1_minutes );
+    maid->add_effect( effect_comfortness, maid_c_mod   * 1_minutes );
+
+    add_msg( m_debug, _("Player h: %2d+%2d=%2d c:%2d+%2d=%2d"),
+            player_h,player_h_mod,p->get_effect_int(effect_happiness  , num_bp),
+            player_c,player_c_mod,p->get_effect_int(effect_comfortness, num_bp));
+    add_msg( m_debug, _("Maid   h: %2d+%2d=%2d c:%2d+%2d=%2d"),
+            maid_h,maid_h_mod,maid->get_effect_int(effect_happiness  , num_bp),
+            maid_c,maid_c_mod,maid->get_effect_int(effect_comfortness, num_bp));
+
+    littlemaid_ecstasy_check(p, maid);
+    act->set_to_null();
+}
+void activity_handlers::littlemaid_service_do_turn( player_activity *act, player *p ){
+    (void)p;
+    if( calendar::once_every( 10_seconds ) ) {
+        shared_ptr_fast<monster> maid = act->monsters[0].lock();
+        maid->add_effect( effect_littlemaid_in_service, 20_seconds, num_bp);
+    }
+
+
+}
+void activity_handlers::littlemaid_service_finish( player_activity *act, player *p ){
+    shared_ptr_fast<monster> maid = act->monsters[0].lock();
+    p->add_msg_if_player( m_good, _( "You got service by %s." ), maid->name() );
+
+    int player_h = p->   get_effect_int(effect_happiness  , num_bp);
+    int player_c = p->   get_effect_int(effect_comfortness, num_bp);
+    int maid_h   = maid->get_effect_int(effect_happiness  , num_bp);
+    int maid_c   = maid->get_effect_int(effect_comfortness, num_bp);
+    int maid_f   = maid->get_effect_int(effect_maid_fatigue, num_bp);
+
+    int player_h_mod = 10  + 15 * (100 - player_h) / 100             * (100 - maid_f) / 100;
+    int player_c_mod = 20 + 15 * player_h / 100 + 15 * maid_h / 100  * (100 - maid_f) / 100;
+    int maid_h_mod   = 5  + 15 * (100 - maid_h  ) / 100              * (100 - maid_f) / 100;
+    int maid_c_mod   = 1                                             * (100 - maid_f) / 100;
+
+    player_h_mod = rng(player_h_mod * 8 / 10, player_h_mod);
+    player_c_mod = rng(player_c_mod * 8 / 10, player_c_mod);
+    maid_h_mod   = rng(maid_h_mod   * 8 / 10, maid_h_mod);
+    maid_c_mod   = rng(maid_c_mod   * 8 / 10, maid_c_mod);
+
+    p->add_effect(    effect_happiness  , player_h_mod * 1_minutes );
+    p->add_effect(    effect_comfortness, player_c_mod * 1_minutes );
+    maid->add_effect( effect_happiness  , maid_h_mod   * 1_minutes );
+    maid->add_effect( effect_comfortness, maid_c_mod   * 1_minutes );
+
+    add_msg( m_debug, _("Player h: %2d+%2d=%2d c:%2d+%2d=%2d"),
+            player_h,player_h_mod,p->get_effect_int(effect_happiness  , num_bp),
+            player_c,player_c_mod,p->get_effect_int(effect_comfortness, num_bp));
+    add_msg( m_debug, _("Maid   h: %2d+%2d=%2d c:%2d+%2d=%2d"),
+            maid_h,maid_h_mod,maid->get_effect_int(effect_happiness  , num_bp),
+            maid_c,maid_c_mod,maid->get_effect_int(effect_comfortness, num_bp));
+
+    littlemaid_ecstasy_check(p, maid);
+    act->set_to_null();
+}
+void activity_handlers::littlemaid_special_do_turn( player_activity *act, player *p ){
+    (void)p;
+    if( calendar::once_every( 10_seconds ) ) {
+        shared_ptr_fast<monster> maid = act->monsters[0].lock();
+        maid->add_effect( effect_littlemaid_in_special, 20_seconds, num_bp);
+    }
+
+
+}
+void activity_handlers::littlemaid_special_finish( player_activity *act, player *p ){
+    shared_ptr_fast<monster> maid = act->monsters[0].lock();
+    p->add_msg_if_player( m_good, _( "You finished special thing with %s." ), maid->name() );
+
+    int player_h = p->   get_effect_int(effect_happiness  , num_bp);
+    int player_c = p->   get_effect_int(effect_comfortness, num_bp);
+    int maid_h   = maid->get_effect_int(effect_happiness  , num_bp);
+    int maid_c   = maid->get_effect_int(effect_comfortness, num_bp);
+    int maid_f   = maid->get_effect_int(effect_maid_fatigue, num_bp);
+
+    int player_h_mod = 10  + 10 * (100 - player_h) / 100              * (100 - maid_f) / 100;
+    int player_c_mod = 15  + 40 * player_h / 100 + 10 * maid_h / 100  * (100 - maid_f) / 100;
+    int maid_h_mod   = 10  + 10 * (100 - maid_h  ) / 100              * (100 - maid_f) / 100;
+    int maid_c_mod   = 10  + 10 * player_h / 100 + 40 * maid_h / 100  * (100 - maid_f) / 100;
+
+    player_h_mod = rng(player_h_mod * 8 / 10, player_h_mod);
+    player_c_mod = rng(player_c_mod * 8 / 10, player_c_mod);
+    maid_h_mod   = rng(maid_h_mod   * 8 / 10, maid_h_mod);
+    maid_c_mod   = rng(maid_c_mod   * 8 / 10, maid_c_mod);
+
+    p->add_effect(    effect_happiness  , player_h_mod * 1_minutes );
+    p->add_effect(    effect_comfortness, player_c_mod * 1_minutes );
+    maid->add_effect( effect_happiness  , maid_h_mod   * 1_minutes );
+    maid->add_effect( effect_comfortness, maid_c_mod   * 1_minutes );
+
+    add_msg( m_debug, _("Player h: %2d+%2d=%2d c:%2d+%2d=%2d"),
+            player_h,player_h_mod,p->get_effect_int(effect_happiness  , num_bp),
+            player_c,player_c_mod,p->get_effect_int(effect_comfortness, num_bp));
+    add_msg( m_debug, _("Maid   h: %2d+%2d=%2d c:%2d+%2d=%2d"),
+            maid_h,maid_h_mod,maid->get_effect_int(effect_happiness  , num_bp),
+            maid_c,maid_c_mod,maid->get_effect_int(effect_comfortness, num_bp));
+
+    littlemaid_ecstasy_check(p, maid);
+    act->set_to_null();
+}
+
+void activity_handlers::take_shower_do_turn( player_activity *act, player *p ){
+    if( calendar::once_every( 1_minutes ) ) {
+        body_part_set drenched_parts;
+        if( !act->str_values.empty() && act->str_values[0] == "hands" ){
+            drenched_parts = { { bp_hand_l, bp_hand_r } };
+        } else {
+            drenched_parts = { { bp_torso, bp_head, bp_arm_l, bp_arm_r, bp_hand_l, bp_hand_r, bp_leg_l, bp_leg_r, bp_foot_l, bp_foot_r } };
+        }
+        p->drench( 50, drenched_parts, true );
+    }
+    if( !act->str_values.empty() && act->str_values[0] == "hot" ) {
+        g->m.emit_field( p->pos(), emit_id( "emit_shower_vehicle" ) , 1.0f );
+    }
+}
+
+void activity_handlers::take_shower_finish( player_activity *act, player *p ){
+    if( !act->str_values.empty() && act->str_values[0] == "hands" ){
+        p->add_msg_if_player( m_good, _( "You finished washing hands." ) );
+        p->add_morale( MORALE_TAKE_SHOWER, 5, 10, 180_minutes, 120_minutes );
+    } else if( !act->str_values.empty() && act->str_values[0] == "hot" ){
+        p->add_msg_if_player( m_good, _( "You finished taking a hot shower." ) );
+        p->add_morale( MORALE_TAKE_SHOWER, 20, 40, 180_minutes, 120_minutes );
+        p->add_effect( effect_took_shower, 1440_minutes);
+    } else {
+        p->add_msg_if_player( m_good, _( "You finished taking a shower." ) );
+        p->add_morale( MORALE_TAKE_SHOWER, 15, 30, 180_minutes, 120_minutes );
+        p->add_effect( effect_took_shower, 1440_minutes);
+    }
+    act->set_to_null();
+}
+
+
+void activity_handlers::hentai_play_with_do_turn( player_activity *act, player *p ){
+    item &it = p->i_at( act->position );
+    npc *partner = nullptr;
+    if( act->values.size() >= 2 ) {
+        partner = g->critter_by_id<npc>( character_id( act->values[1] ) );
+    }
+    if( partner != nullptr ) {
+        partner->set_moves( -200 );
+    }
+    if( calendar::once_every( 10_minutes ) ) {
+        add_msg( SNIPPET.random_from_category( act->str_values[0] ).value_or( translation() )) ;
+
+        int bonus = p->dex_cur;
+        float bonus_multiplier = 1.0f;
+        if( it.is_null() ) {
+            bonus_multiplier *= 1.5f;
+        }
+        p->add_effect( effect_movingdoing, 10_minutes );
+        if( partner != nullptr ) {
+            bonus_multiplier *= 2.0f;
+            bonus = std::max( p->dex_cur, partner->dex_cur );
+            partner->add_effect( effect_movingdoing, 10_minutes );
+            partner->add_morale( morale_type( act->str_values[1] ), bonus * bonus_multiplier, 0, 1_hours, 15_minutes );
+        }
+        if( get_option<bool>("HENTAI_EXTEND") ) {
+            if( 1 <= act->monsters.size() ) {
+                shared_ptr_fast<monster> mon_partner = act->monsters[0].lock();
+                mon_partner->add_effect( effect_movingdoing, 10_minutes );
+            }
+        }
+        p->add_morale( morale_type( act->str_values[1] ), bonus * bonus_multiplier, 0, 1_hours, 15_minutes );
+    }
+}
+
+void activity_handlers::hentai_play_with_finish( player_activity *act, player *p ){
+    const std::function<std::string( const std::string & )> get_text =[&]( const std::string & id ) {
+        return snippet_id( id )->translated();
+    };
+    p->add_msg_if_player( m_good, get_text( "hentai_play_with_finish" ) );
+    p->remove_effect( effect_lust );
+    p->remove_effect( effect_movingdoing );
+
+    npc *partner = nullptr;
+    if( act->values.size() >= 2 ) {
+        partner = g->critter_by_id<npc>( character_id( act->values[1] ) );
+    }
+    if( partner != nullptr ) {
+        partner->remove_effect( effect_lust );
+        partner->remove_effect( effect_movingdoing );
+        partner->set_moves( 0 );
+
+        if( act->name == "play_with_love" ) {
+            partner->op_of_u.trust += 2;
+            partner->op_of_u.value += 2;
+            partner->op_of_u.fear -= 1;
+            partner->op_of_u.anger -= 1;
+        } else if( act->name == "play_with_fear" ) {
+            partner->op_of_u.trust -= 2;
+            partner->op_of_u.fear += 5;
+            partner->op_of_u.anger += 1;
+            partner->op_of_u.owed -= 1;
+        }
+    }
+
+    if( get_option<bool>("HENTAI_EXTEND") ) {
+        if( 1 <= act->monsters.size() ) {
+            shared_ptr_fast<monster> mon_partner = act->monsters[0].lock();
+            mon_partner->remove_effect( effect_movingdoing );
+        }
+    }
+
+    item &it = p->i_at( act->position );
+    if( !it.is_null() ) {
+        if( ( rng( 1, 100 ) <= act->values[0] ) ) {
+            p->add_msg_if_player( m_bad, string_format( _( act->str_values[2] ), it.display_name() ) );
+            p->i_rem( &it );
+            it = null_item_reference();
+        }
+    }
+
+    item liquid = item( "h_body_fluids", calendar::turn );
+    if( !it.is_null() && it.has_property( "used_item" ) ) {
+        item used = item( it.get_property_string( "used_item" ) );
+        if( !used.is_null() ) {
+            used.fill_with( liquid );
+            p->i_add( used );
+        }
+        p->i_rem( &it );
+    } else {
+        g->m.add_item( p->pos(), liquid );
+    }
+
+    act->set_to_null();
+}
+
+
+void activity_handlers::custom_activity_do_turn( player_activity *act, player *p ){
+
+    if( !act->custom_activity_data->is_free_monster_in_act ) {
+        if( 1 <= act->monsters.size() ) {
+            if( calendar::once_every( 10_seconds ) ) {
+                shared_ptr_fast<monster> target_monster = act->monsters[0].lock();
+                target_monster->add_effect( effect_bind_by_custom_activity, 20_seconds);
+            }
+        }
+    }
+    if( act->custom_activity_data->doing_message != "" ) {
+        if( calendar::once_every( 5_minutes ) ) {
+            p->add_msg_if_player( m_neutral, _( act->custom_activity_data->doing_message ) );
+        }
+    }
+}
+
+void activity_handlers::custom_activity_finish( player_activity *act, player *p ){
+
+    shared_ptr_fast<monster> target_monster;
+    bool is_pet_monster_activity;
+
+    if( 1 <= act->monsters.size() ) {
+        target_monster = act->monsters[0].lock();
+        is_pet_monster_activity = true;
+    }
+
+    if( act->custom_activity_data->finish_message != "" ) {
+        if( is_pet_monster_activity ) {
+            p->add_msg_if_player( m_good, _( act->custom_activity_data->finish_message ), target_monster->name() );
+        } else {
+            p->add_msg_if_player( m_good, _( act->custom_activity_data->finish_message ) );
+        }
+    }
+
+    // XXX can i add morale and effect type only json file, without hardcoding?
+    if(act->custom_activity_data->morale_type_id != ""){
+        p->add_morale( morale_type( act->custom_activity_data->morale_type_id ),
+                act->custom_activity_data->morale_amount,
+                act->custom_activity_data->morale_amount * 2,
+                time_duration::from_turns( act->custom_activity_data->morale_duration_turns ),
+                time_duration::from_turns( act->custom_activity_data->morale_duration_turns / 2 ) );
+    }
+
+    if(act->custom_activity_data->effect_type_id != ""){
+        // TODO handle effect intense
+        p->add_effect( efftype_id( act->custom_activity_data->effect_type_id ),
+                time_duration::from_turns(act->custom_activity_data->effect_duration_turns) );
+    }
+
+    if(act->custom_activity_data->result_item_id_str != ""){
+           item result_item = item(
+               act->custom_activity_data->result_item_id_str,
+               calendar::turn,
+               act->custom_activity_data->result_item_charges );
+        if( result_item.made_of( LIQUID ) ) {
+            liquid_handler::handle_all_liquid( result_item, PICKUP_RANGE );
+        } else if( act->custom_activity_data->is_result_item_drop_to_ground ) {
+            put_into_vehicle_or_drop(*p, item_drop_reason::tumbling, { result_item });
+        } else {
+            p->i_add_or_drop( result_item );
+        }
+    }
+
+    if( is_pet_monster_activity ) {
+        target_monster->add_effect(
+            efftype_id( effect_cooldown_of_custom_activity ),
+            time_duration::from_turns(act->custom_activity_data->pet_cooldown_turns) );
+        target_monster->remove_effect( effect_bind_by_custom_activity );
+    }
+
+    act->set_to_null();
+}
+

@@ -777,6 +777,7 @@ class game
         // Places the player at the specified point; hurts feet, lists items etc.
         point place_player( const tripoint &dest );
         void place_player_overmap( const tripoint &om_dest );
+        void ftl_drive( const tripoint &om_dest, vehicle& veh );
 
         bool unload( item &it ); // Unload a gun/tool  'U'
 
@@ -1058,6 +1059,9 @@ class game
 
         // called on map shifting
         void shift_destination_preview( const point &delta );
+
+    public:
+        bool is_debug_touched = false;
 };
 
 // Returns temperature modifier from direct heat radiation of nearby sources

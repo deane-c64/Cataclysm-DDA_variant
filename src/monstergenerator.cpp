@@ -170,6 +170,8 @@ std::string enum_to_string<m_flag>( m_flag data )
         case MF_STUN_IMMUNE: return "STUN_IMMUNE";
         case MF_LOUDMOVES: return "LOUDMOVES";
         case MF_DROPS_AMMO: return "DROPS_AMMO";
+        case MF_LITTLE_MAID: return "LITTLE_MAID";
+        case MF_SHOGGOTH_MAID: return "SHOGGOTH_MAID";
         // *INDENT-ON*
         case m_flag::MF_MAX:
             break;
@@ -588,6 +590,12 @@ void MonsterGenerator::init_attack()
     add_hardcoded_attack( "GRAB_DRAG", mattack::grab_drag );
     add_hardcoded_attack( "DOOT", mattack::doot );
     add_hardcoded_attack( "ZOMBIE_FUSE", mattack::zombie_fuse );
+    add_hardcoded_attack( "LITTLEMAID_ACTION", mattack::littlemaid_action );
+    add_hardcoded_attack( "SHOGGOTHMAID_ACTION", mattack::shoggothmaid_action );
+    add_hardcoded_attack( "MELEE_BOT", mattack::melee_bot );
+    add_hardcoded_attack( "STRIP_U", mattack::stripu );
+    add_hardcoded_attack( "SEDUCE", mattack::seduce );
+    add_hardcoded_attack( "THROW_KISS", mattack::tkiss );
 }
 
 void MonsterGenerator::init_defense()
@@ -1003,6 +1011,14 @@ mtype_special_attack MonsterGenerator::create_actor( const JsonObject &obj,
         new_attack = std::make_unique<gun_actor>();
     } else if( attack_type == "spell" ) {
         new_attack = std::make_unique<mon_spellcasting_actor>();
+    } else if( attack_type == "wife_u" ) {
+        new_attack = std::make_unique<wife_u_actor>();
+    } else if( attack_type == "summon_mon" ) {
+        new_attack = std::make_unique<summon_mon_actor>();
+    } else if( attack_type == "expose" ) {
+        new_attack = std::make_unique<expose_actor>();
+    } else if( attack_type == "place_field" ) {
+        new_attack = std::make_unique<place_field_actor>();
     } else {
         obj.throw_error( "unknown monster attack", "attack_type" );
     }

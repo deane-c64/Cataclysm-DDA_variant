@@ -933,6 +933,13 @@ void Item_factory::init()
     add_iuse( "WEED_CAKE", &iuse::weed_cake );
     add_iuse( "XANAX", &iuse::xanax );
     add_iuse( "BREAK_STICK", &iuse::break_stick );
+    add_iuse( "UNDERGROUND_SONAR", &iuse::underground_sonar );
+    add_iuse( "NAMING", &iuse::naming );
+    add_iuse( "SPAWN_ARTIFACT", &iuse::spawn_artifact );
+    add_iuse( "PLACE_BEACON", &iuse::place_beacon );
+    add_iuse( "HORDE_BEACON_ON", &iuse::horde_beacon_on );
+    add_iuse( "HORDE_BEACON_OFF", &iuse::horde_beacon_off );
+
 
     add_actor( std::make_unique<ammobelt_actor>() );
     add_actor( std::make_unique<bandolier_actor>() );
@@ -973,6 +980,10 @@ void Item_factory::init()
     add_actor( std::make_unique<cast_spell_actor>() );
     add_actor( std::make_unique<weigh_self_actor>() );
     add_actor( std::make_unique<sew_advanced_actor>() );
+    add_actor( std::make_unique<yiff_actor>() );
+    add_actor( std::make_unique<anthropomorph_actor>() );
+    add_actor( std::make_unique<make_pet_actor>() );
+    add_actor( std::make_unique<transsexual_actor>() );
     // An empty dummy group, it will not spawn anything. However, it makes that item group
     // id valid, so it can be used all over the place without need to explicitly check for it.
     m_template_groups["EMPTY_GROUP"] = std::make_unique<Item_group>( Item_group::G_COLLECTION, 100, 0,
@@ -2412,6 +2423,17 @@ void Item_factory::load_basic_info( const JsonObject &jo, itype &def, const std:
     } else {
         m_templates[ def.id ] = def;
     }
+
+    if( jo.has_member( "toiletpaper_message" ) ) {
+        jo.read( "toiletpaper_message", def.toiletpaper_message );
+    }
+
+    if( jo.has_member( "toiletpaper_morale" ) ) {
+        jo.read( "toiletpaper_morale", def.toiletpaper_morale );
+    } else {
+        def.toiletpaper_morale = 0;
+    }
+
 }
 
 void Item_factory::load_migration( const JsonObject &jo )

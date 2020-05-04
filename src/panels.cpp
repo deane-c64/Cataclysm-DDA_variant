@@ -1449,6 +1449,8 @@ static void draw_needs_labels( const avatar &u, const catacurses::window &w )
     std::pair<std::string, nc_color> rest_pair = u.get_fatigue_description();
     std::pair<nc_color, std::string> temp_pair = temp_stat( u );
     std::pair<std::string, nc_color> pain_pair = u.get_pain_description();
+    std::pair<std::string, nc_color> excrete_pair = u.get_excrete_description();
+
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     mvwprintz( w, point( 1, 0 ), c_light_gray, _( "Pain :" ) );
     mvwprintz( w, point( 8, 0 ), pain_pair.second, pain_pair.first );
@@ -1462,6 +1464,8 @@ static void draw_needs_labels( const avatar &u, const catacurses::window &w )
     mvwprintz( w, point( 30, 1 ), hunger_pair.second, hunger_pair.first );
     mvwprintz( w, point( 1, 2 ), c_light_gray, _( "Heat :" ) );
     mvwprintz( w, point( 8, 2 ), temp_pair.first, temp_pair.second );
+    mvwprintz( w, point( 23, 2 ), c_light_gray, _( "Bowel :" ) );
+    mvwprintz( w, point( 30, 2 ), excrete_pair.second, excrete_pair.first );
     wrefresh( w );
 }
 
@@ -1970,6 +1974,33 @@ static void draw_mana_wide( const player &u, const catacurses::window &w )
     print_mana( u, w, " %s: %s %s : %s", -5, -5, 13, -5 );
 }
 
+static void draw_bowel( const player &u, const catacurses::window &w )
+{
+    std::pair<std::string, nc_color> excrete_pair = u.get_excrete_description();
+    werase( w );
+    mvwprintz( w, point( 1, 0 ), c_light_gray, _( "Bowel :" ) );
+    mvwprintz( w, point( 8, 0 ), excrete_pair.second, excrete_pair.first );
+    wrefresh( w );
+}
+
+static void draw_graphical_clock_wide( const avatar &, const catacurses::window &w )
+{
+    werase( w );
+
+    // display sky
+    if( g->get_levz() >= 0 ) {
+        wmove( w, point( 1, 0 ) );
+        draw_time_graphic( w );
+    } else {
+        // NOLINTNEXTLINE(cata-text-style): the question mark does not end a sentence
+        mvwprintz( w, point( 1, 0 ), c_light_gray, _( "[   ?   ]" ) );
+    }
+    // display moon
+    nc_color clr = c_white;
+    print_colored_text( w, point( 15, 0 ), clr, c_white, get_moon_graphic() );
+    wrefresh( w );
+}
+
 // ============
 // INITIALIZERS
 // ============
@@ -2009,6 +2040,7 @@ static std::vector<window_panel> initialize_default_classic_panels()
                                     default_render, true ) );
 #endif // TILES
     ret.emplace_back( window_panel( draw_ai_goal, "AI Needs", 1, 44, false ) );
+    ret.emplace_back( window_panel( draw_bowel, translate_marker("Excrement Needs"), 1, 44, true ) );
     return ret;
 }
 
@@ -2033,6 +2065,7 @@ static std::vector<window_panel> initialize_default_compact_panels()
                                     default_render, true ) );
 #endif // TILES
     ret.emplace_back( window_panel( draw_ai_goal, "AI Needs", 1, 32, false ) );
+    ret.emplace_back( window_panel( draw_bowel, translate_marker("Excrement Needs"), 1, 32, true ) );
 
     return ret;
 }
@@ -2063,6 +2096,7 @@ static std::vector<window_panel> initialize_default_label_narrow_panels()
                                     default_render, true ) );
 #endif // TILES
     ret.emplace_back( window_panel( draw_ai_goal, "AI Needs", 1, 32, false ) );
+    ret.emplace_back( window_panel( draw_bowel, translate_marker("Excrement Needs"), 1, 32, true ) );
 
     return ret;
 }
@@ -2094,6 +2128,9 @@ static std::vector<window_panel> initialize_default_label_panels()
                                     default_render, true ) );
 #endif // TILES
     ret.emplace_back( window_panel( draw_ai_goal, "AI Needs", 1, 44, false ) );
+    ret.emplace_back( window_panel( draw_bowel, translate_marker("Excrement Needs"), 1, 44, true ) );
+    ret.emplace_back( window_panel( draw_graphical_clock_wide, translate_marker("Graphical Clock"), 1, 44, true ) );
+
 
     return ret;
 }

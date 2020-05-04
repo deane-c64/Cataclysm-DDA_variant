@@ -4312,9 +4312,13 @@ static void process_vehicle_items( vehicle &cur_veh, int part )
         for( auto &n : cur_veh.get_items( part ) ) {
             const time_duration washing_time = 90_minutes;
             const time_duration time_left = washing_time - n.age();
+            static const std::string fragrant( "FRAGRANT" );
             static const std::string filthy( "FILTHY" );
             if( time_left <= 0_turns ) {
                 n.item_tags.erase( filthy );
+                if( n.is_armor() ){
+                    n.item_tags.insert( fragrant );
+                }
                 washing_machine_finished = true;
                 cur_veh.parts[part].enabled = false;
             } else if( calendar::once_every( 15_minutes ) ) {
@@ -4487,6 +4491,11 @@ void map::process_items_in_vehicles( submap &current_submap, const int gridz,
             // vehicle not in the vehicle list of the nonant, has been
             // destroyed (or moved to another nonant?)
             // Can't be sure that it still exists, so skip it
+
+            continue;
+        }
+        if( cur_veh->lightmode_cargo && !calendar::once_every( 1_minutes )) {
+            // reduce process item in cargo to once per 1 minute
             continue;
         }
 

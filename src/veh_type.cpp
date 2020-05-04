@@ -101,6 +101,7 @@ static const std::unordered_map<std::string, vpart_bitflags> vpart_bitflag_map =
     { "REACTOR", VPFLAG_REACTOR },
     { "RAIL", VPFLAG_RAIL },
     { "TURRET_CONTROLS", VPFLAG_TURRET_CONTROLS },
+    { "SHARED_FOOD_STORAGE", VPFLAG_SHARED_FOOD_STORAGE },
 };
 
 static const std::vector<std::pair<std::string, veh_ter_mod>> standard_terrain_mod = {{
@@ -451,9 +452,12 @@ void vpart_info::finalize()
         if( e.second.location == "on_roof" ) {
             e.second.z_order = 9;
             e.second.list_order = 3;
+        // TODO make option
+            /*
         } else if( e.second.location == "on_cargo" ) {
             e.second.z_order = 8;
             e.second.list_order = 6;
+            */
         } else if( e.second.location == "center" ) {
             e.second.z_order = 7;
             e.second.list_order = 7;

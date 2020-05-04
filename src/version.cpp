@@ -16,3 +16,9 @@ const char *getVersionString()
 {
     return VERSION;
 }
+
+
+const char *getVariantVersionString()
+{
+    return "Variant_JP_0.E_r7 (based #10478)";
+}

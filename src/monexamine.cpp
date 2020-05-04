@@ -36,9 +36,12 @@
 #include "type_id.h"
 #include "pimpl.h"
 #include "point.h"
+#include "custom_activity.h"
+#include "options.h"
 
 static const activity_id ACT_MILK( "ACT_MILK" );
 static const activity_id ACT_PLAY_WITH_PET( "ACT_PLAY_WITH_PET" );
+static const activity_id ACT_CUSTOM_ACTIVITY( "ACT_CUSTOM_ACTIVITY" );
 
 static const efftype_id effect_controlled( "controlled" );
 static const efftype_id effect_harnessed( "harnessed" );
@@ -50,9 +53,38 @@ static const efftype_id effect_ridden( "ridden" );
 static const efftype_id effect_saddled( "monster_saddled" );
 static const efftype_id effect_tied( "tied" );
 
+// littlemaid order things
+const efftype_id effect_littlemaid_play( "littlemaid_play" );
+const efftype_id effect_littlemaid_itemize( "littlemaid_itemize" );
+const efftype_id effect_littlemaid_talk( "littlemaid_talk" );
+const efftype_id effect_littlemaid_wipe_liquid( "littlemaid_wipe_liquid" );
+
+// littlemaid order status things
+const efftype_id effect_littlemaid_stay( "littlemaid_stay" );
+const efftype_id effect_littlemaid_speak_off( "littlemaid_speak_off" );
+
+// littlemaid play things
+const efftype_id effect_littlemaid_in_kiss( "littlemaid_in_kiss" );
+const efftype_id effect_littlemaid_in_petting( "littlemaid_in_petting" );
+const efftype_id effect_littlemaid_in_service( "littlemaid_in_service" );
+const efftype_id effect_littlemaid_in_special( "littlemaid_in_special" );
+
+// littlemaid playing status things
+const efftype_id effect_happiness( "happiness" );
+const efftype_id effect_comfortness( "comfortness" );
+const efftype_id effect_ecstasy( "ecstasy" );
+const efftype_id effect_maid_fatigue( "maid_fatigue" );
+
+const efftype_id effect_cooldown_of_custom_activity( "effect_cooldown_of_custom_activity" );
+const efftype_id effect_cubi_allow_seduce_friendlyfire( "cubi_allow_seduce_friendlyfire" );
+
+// littlemaid auto move things
+const efftype_id effect_littlemaid_goodnight( "littlemaid_goodnight" );
+
 static const skill_id skill_survival( "survival" );
 
 static const species_id ZOMBIE( "ZOMBIE" );
+static const species_id SPECIES_CUBI( "CUBI" );
 
 bool monexamine::pet_menu( monster &z )
 {
@@ -78,6 +110,14 @@ bool monexamine::pet_menu( monster &z )
         remove_bat,
         insert_bat,
         check_bat,
+        littlemaid_change_costume,
+        littlemaid_itemize,
+        littlemaid_toggle_speak,
+        littlemaid_stay,
+        littlemaid_wipe_floor,
+        littlemaid_play,
+        custom_activity_choice,
+        cubi_toggle_seduce_friend,
     };
 
     uilist amenu;
@@ -185,6 +225,62 @@ bool monexamine::pet_menu( monster &z )
             amenu.addentry( insert_bat, false, 'x', _( "You need a %s to power this mech" ), type.nname( 1 ) );
         }
     }
+
+    if( z.has_flag( MF_LITTLE_MAID ) ) {
+        amenu.addentry( littlemaid_itemize, true, 'i', _( "Itemize littlemaid" ));
+        amenu.addentry( littlemaid_change_costume, true, 'C', _( "Change costume" ));
+        if( z.has_effect( effect_littlemaid_speak_off ) ){
+            amenu.addentry( littlemaid_toggle_speak, true, 's', _( "Allow speak" ));
+        } else {
+            amenu.addentry( littlemaid_toggle_speak, true, 's', _( "Stop speak" ));
+        }
+        if( z.has_effect( effect_littlemaid_stay ) ){
+            amenu.addentry( littlemaid_stay, true, 'f', _( "Follow me" ));
+        } else {
+            amenu.addentry( littlemaid_stay, true, 'f', _( "Stay here" ));
+        }
+        if( z.has_effect( effect_littlemaid_wipe_liquid ) ){
+            amenu.addentry( littlemaid_wipe_floor, true, 'w', _( "Stop wipe floor" ));
+        } else {
+            amenu.addentry( littlemaid_wipe_floor, true, 'w', _( "Wipe floor" ));
+        }
+
+        amenu.addentry( littlemaid_play, true, 'l', _( "Lovely activity" ));
+    }
+    if( z.has_flag( MF_SHOGGOTH_MAID ) ) {
+        amenu.addentry( littlemaid_change_costume, true, 'C', _( "Change costume" ));
+        amenu.addentry( littlemaid_toggle_speak, false, 's', _( "Shoggoth maid do not stop speak" ));
+
+        if( z.has_effect( effect_littlemaid_stay ) ){
+            amenu.addentry( littlemaid_stay, true, 'f', _( "Follow me" ));
+        } else {
+            amenu.addentry( littlemaid_stay, true, 'f', _( "Stay here" ));
+        }
+        if( z.has_effect( effect_littlemaid_wipe_liquid ) ){
+            amenu.addentry( littlemaid_wipe_floor, true, 'w', _( "Stop wipe floor" ));
+        } else {
+            amenu.addentry( littlemaid_wipe_floor, true, 'w', _( "Wipe floor" ));
+        }
+
+        amenu.addentry( littlemaid_play, true, 'l', _( "Lovely activity" ));
+    }
+
+    if( get_option<bool>( "HENTAI_EXTEND" ) ) {
+        if( z.in_species( SPECIES_CUBI ) ){
+            if( z.has_effect( effect_cubi_allow_seduce_friendlyfire ) ){
+                amenu.addentry( cubi_toggle_seduce_friend, true, 'S', _( "Stop seduce me" ));
+            } else {
+                amenu.addentry( cubi_toggle_seduce_friend, true, 'S', _( "Seduce me" ));
+            }
+        }
+    }
+
+    custom_activity *c_act = custom_activity_manager::find_pet_monster_activity( z.type->id );
+    if( c_act != nullptr ){
+        amenu.addentry( custom_activity_choice, true, 'C',
+                string_format( _( c_act->name_in_select_menu ), z.name() ));
+    }
+
     amenu.query();
     int choice = amenu.ret;
 
@@ -250,6 +346,31 @@ bool monexamine::pet_menu( monster &z )
             insert_battery( z );
             break;
         case check_bat:
+            break;
+        case littlemaid_play:
+            maid_play( z );
+            break;
+        case littlemaid_stay:
+            maid_stay_or_follow( z );
+            break;
+        case littlemaid_itemize:
+            maid_itemize( z );
+            break;
+        case littlemaid_toggle_speak:
+            maid_toggle_speak( z );
+            break;
+        case littlemaid_wipe_floor:
+            maid_toggle_wipe_floor( z );
+            break;
+        case littlemaid_change_costume:
+            maid_change_costume( z );
+            break;
+        case custom_activity_choice:
+            start_custom_activity( z, c_act );
+            break;
+        case cubi_toggle_seduce_friend:
+            cubi_allow_seduce_friendlyfire( z );
+            break;
         default:
             break;
     }
@@ -703,5 +824,159 @@ void monexamine::milk_source( monster &source_mon )
         add_msg( _( "You milk the %s." ), source_mon.get_name() );
     } else {
         add_msg( _( "The %s has no more milk." ), source_mon.get_name() );
+    }
+}
+
+void monexamine::maid_stay_or_follow( monster &z )
+{
+    if( z.has_effect( effect_littlemaid_stay ) ) {
+        add_msg( _("order %s to follow."), z.name() );
+        z.remove_effect( effect_littlemaid_stay );
+    } else {
+        add_msg( _("order %s to stay."), z.name() );
+        z.add_effect( effect_littlemaid_stay, 1_turns, num_bp, true );
+    }
+}
+
+void monexamine::maid_itemize( monster &z )
+{
+    if( z.storage_item || z.armor_item || !z.inv.empty() || z.tied_item ){
+        add_msg( m_info, _("remove all equipment from littlemaid before itemize.") );
+    } else if( query_yn( _( "Itemize the %s?" ), z.name() ) ) {
+        g->u.moves -= 100;
+        g->u.i_add( item( "little_maid_R18_milk_sanpo" ) );
+        g->remove_zombie( z );
+    }
+}
+
+void monexamine::maid_change_costume( monster &z )
+{
+    if( query_yn( _( "Change %s's costume?" ), z.name() ) ) {
+        g->u.moves -= 100;
+        // little maid
+        if (z.type->id == mtype_id("mon_little_maid_R18_milk_sanpo")) {
+            z.poly( mtype_id("mon_little_maid_R18_milk_sanpo_altanate"));
+        } else if (z.type->id == mtype_id("mon_little_maid_R18_milk_sanpo_altanate") && one_in(10) ){
+            z.poly( mtype_id("mon_little_maid_R18_milk_sanpo_classic"));
+        } else if (z.type->id == mtype_id("mon_little_maid_R18_milk_sanpo_altanate")  ){
+            z.poly( mtype_id("mon_little_maid_R18_milk_sanpo"));
+        } else if (z.type->id == mtype_id("mon_little_maid_R18_milk_sanpo_classic")  ){
+            z.poly( mtype_id("mon_little_maid_R18_milk_sanpo"));
+
+        // shoggoth maid
+        } else if (z.type->id == mtype_id("mon_shoggoth_maid")  ){
+            z.poly( mtype_id("mon_shoggoth_maid_altanate"));
+        } else if (z.type->id == mtype_id("mon_shoggoth_maid_altanate") && one_in(10) ){
+            z.poly( mtype_id("mon_shoggoth_maid_classic"));
+        } else if (z.type->id == mtype_id("mon_shoggoth_maid_altanate")  ){
+            z.poly( mtype_id("mon_shoggoth_maid"));
+        } else if (z.type->id == mtype_id("mon_shoggoth_maid_classic")  ){
+            z.poly( mtype_id("mon_shoggoth_maid"));
+        }
+    }
+}
+
+void monexamine::maid_toggle_speak( monster &z )
+{
+    if( z.has_effect( effect_littlemaid_speak_off ) ) {
+        add_msg( _("allow littlemaid speak.") );
+        z.remove_effect( effect_littlemaid_speak_off );
+    } else {
+        add_msg( _("stop littlemaid speak.") );
+        z.add_effect( effect_littlemaid_speak_off, 1_turns, num_bp, true );
+    }
+}
+
+void monexamine::maid_toggle_wipe_floor( monster &z )
+{
+    if( z.has_effect( effect_littlemaid_wipe_liquid) ) {
+        add_msg( _("Ordered to stop wipe floor to maid.") );
+        z.remove_effect( effect_littlemaid_wipe_liquid );
+    } else {
+        add_msg( _("Ordered to wipe floor to maid.") );
+        z.add_effect( effect_littlemaid_wipe_liquid, 1_turns, num_bp, true );
+    }
+}
+
+void monexamine::maid_play( monster &z )
+{
+
+    enum maid_choices {
+        littlemaid_kiss = 0,
+        littlemaid_petting,
+        littlemaid_service,
+        littlemaid_special
+    };
+
+    uilist amenu;
+    std::string pet_name = z.get_name();
+    amenu.text = string_format( _( "What to do with your %s?" ), pet_name );
+
+    amenu.addentry( littlemaid_kiss, true, 'k', _( "Kiss" ) );
+    amenu.addentry( littlemaid_petting, true, 'p', _( "Petting" ) );
+    amenu.addentry( littlemaid_service, true, 's', _( "Get service" ) );
+    amenu.addentry( littlemaid_special, true, 'x', _( "Special thing" ) );
+
+    amenu.query();
+    int choice = amenu.ret;
+
+    string_id<activity_type> act_id;
+    switch( choice ) {
+    case littlemaid_kiss:
+        act_id = activity_id( "ACT_LITTLEMAID_KISS" );
+        break;
+    case littlemaid_petting:
+        act_id = activity_id( "ACT_LITTLEMAID_PETTING" );
+        break;
+    case littlemaid_service:
+        act_id = activity_id( "ACT_LITTLEMAID_SERVICE" );
+        break;
+    case littlemaid_special:
+        act_id = activity_id( "ACT_LITTLEMAID_SPECIAL" );
+        break;
+    default:
+        return;
+    }
+    player_activity act = player_activity( act_id,
+                        to_moves<int>( 10_minutes ),-1,0,"having fun with maid" );
+    act.monsters.emplace_back( g->shared_from( z ) );
+    g->u.assign_activity(act);
+}
+
+void monexamine::start_custom_activity( monster &z, custom_activity *c_act){
+
+
+    if( z.has_effect(effect_cooldown_of_custom_activity) ) {
+        add_msg( m_bad, _(c_act->not_ready_message), z.name() );
+        return;
+    }
+
+    if( c_act->query_yn_message != "" ) {
+        const std::string msg = c_act->query_yn_message;
+        if( !query_yn( string_format( _( c_act->query_yn_message ), z.name() )  ) ) {
+            return;
+        }
+    }
+
+    activity_id act_id = activity_id( "ACT_CUSTOM_ACTIVITY" );
+
+    player_activity act = player_activity( act_id,
+                        to_moves<int>( time_duration::from_turns( c_act->to_finish_turns ) ),-1,0, c_act->name );
+    act.monsters.emplace_back( g->shared_from( z ) );
+    act.custom_activity_data = c_act;
+    g->u.assign_activity(act);
+    if( c_act->start_message != "" ){
+        add_msg( _(c_act->start_message), z.name() );
+    }
+}
+
+void monexamine::cubi_allow_seduce_friendlyfire( monster &z )
+{
+    if( z.has_effect( effect_cubi_allow_seduce_friendlyfire ) ) {
+        add_msg( _("Stop make %s to seduce you."), z.name() );
+        z.remove_effect( effect_cubi_allow_seduce_friendlyfire );
+    } else {
+        add_msg( _("Make %s to seduce you."), z.name() );
+        z.add_effect( effect_cubi_allow_seduce_friendlyfire, 1_turns, num_bp, true );
     }
 }

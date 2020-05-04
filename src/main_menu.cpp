@@ -126,8 +126,8 @@ void main_menu::print_menu( const catacurses::window &w_open, int iSel, const po
         mvwputch( w_open, point( i, window_height - 4 ), c_white, LINE_OXOX );
     }
 
-    center_print( w_open, window_height - 2, c_red,
-                  _( "Bugs?  Suggestions?  Use links in MOTD to report them." ) );
+    center_print( w_open, window_height - 2, c_pink,
+                  _( "This is unofficial variant. Please see MOTD and send bug report or suggetion." ) );
 
     center_print( w_open, window_height - 1, c_light_cyan, string_format( _( "Tip of the day: %s" ),
                   vdaytip ) );
@@ -197,7 +197,7 @@ void main_menu::print_menu( const catacurses::window &w_open, int iSel, const po
     }
 
     iLine++;
-    center_print( w_open, iLine, cColor3, string_format( _( "Version: %s" ), getVersionString() ) );
+    center_print( w_open, iLine, cColor3, string_format( _( "Version: %s %s" ), getVariantVersionString(), getVersionString() ) );
 
     int menu_length = 0;
     for( size_t i = 0; i < vMenuItems.size(); ++i ) {

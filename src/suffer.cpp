@@ -1255,8 +1255,8 @@ void Character::suffer_from_artifacts()
     }
 
     if( has_artifact_with( AEP_BAD_WEATHER ) && calendar::once_every( 1_minutes ) &&
-        g->weather.weather != WEATHER_SNOWSTORM ) {
-        g->weather.weather_override = WEATHER_SNOWSTORM;
+            g->weather.weather != WEATHER_ACID_STORM ) {
+            g->weather.weather_override = WEATHER_ACID_STORM;
         g->weather.set_nextweather( calendar::turn );
     }
 
@@ -1734,6 +1734,18 @@ void Character::drench( int saturation, const body_part_set &flags, bool ignore_
         const int wetness_max = std::min( source_wet_max, bp_wetness_max );
         if( body_wetness[bp] < wetness_max ) {
             body_wetness[bp] = std::min( wetness_max, body_wetness[bp] + wetness_increment );
+        }
+
+        // get wet will lost fragrant
+        bool lost_fragrant = false;
+        for( auto& armor : worn ) {
+            if( armor.covers(bp) ){
+                static const std::string fragrant( "FRAGRANT" );
+                lost_fragrant |= armor.item_tags.erase( fragrant );
+            }
+        }
+        if( lost_fragrant ) {
+            apply_fragrant_morale();
         }
     }
 

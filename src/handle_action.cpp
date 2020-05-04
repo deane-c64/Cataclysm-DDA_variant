@@ -237,9 +237,9 @@ input_context game::get_player_input( std::string &action )
                 /*
                 Location to add rain drop animation bits! Since it refreshes w_terrain it can be added to the animation section easily
                 Get tile information from above's weather information:
-                WEATHER_ACID_DRIZZLE | WEATHER_ACID_RAIN = "weather_acid_drop"
+                WEATHER_ACID_DRIZZLE | WEATHER_ACID_RAIN | WEATHER_ACID_STORM = "weather_acid_drop"
                 WEATHER_DRIZZLE | WEATHER_LIGHT_DRIZZLE | WEATHER_RAINY | WEATHER_THUNDER | WEATHER_LIGHTNING = "weather_rain_drop"
-                WEATHER_FLURRIES | WEATHER_SNOW | WEATHER_SNOWSTORM = "weather_snowflake"
+                WEATHER_FLURRIES | WEATHER_SNOW | WEATHER_SNOWSTORM | WEATHER_ACID_FLURRIES | WEATHER_ACID_SNOW = "weather_snowflake"
                 */
 
 #if defined(TILES)
@@ -926,6 +926,7 @@ static void wait()
         }
 
         player_activity new_act( actType, 100 * ( to_turns<int>( time_to_wait ) - 1 ), 0 );
+        u.start_time = std::chrono::system_clock::now();
 
         u.assign_activity( new_act, false );
     }
@@ -1051,6 +1052,18 @@ static void sleep()
 
     u.moves = 0;
     u.try_to_sleep( try_sleep_dur );
+}
+
+static void excretion(){
+
+    if( query_yn( _( "Do excrete?" ) ) ) {
+
+        g->u.assign_activity(player_activity( activity_id( "ACT_EXCRETE" ),
+        to_moves<int>( 3_minutes ),
+        -1,
+        0,
+        "Excrete" ));
+    }
 }
 
 static void loot()
@@ -1677,6 +1690,11 @@ bool game::handle_action()
             case ACTION_TIMEOUT:
                 if( check_safe_mode_allowed( false ) ) {
                     u.pause();
+                    const bool realtime_turn_passed_message =
+                                    get_option<bool>( "REALTIME_TURN_PASSED_MESSAGE" );
+                    if( realtime_turn_passed_message ) {
+                        add_msg( m_info, _("input timeout.") );
+                    }
                 }
                 break;
 
@@ -2116,6 +2134,10 @@ bool game::handle_action()
                 }
                 break;
 
+            case ACTION_EXCRETE:
+                excretion();
+                break;
+
             case ACTION_CONTROL_VEHICLE:
                 if( u.has_active_mutation( trait_SHELL2 ) ) {
                     add_msg( m_info, _( "You can't operate a vehicle while you're in your shell." ) );
@@ -2462,7 +2484,17 @@ bool game::handle_action()
         }
     }
     if( act != ACTION_TIMEOUT ) {
-        u.mod_moves( -current_turn.moves_elapsed() );
+        const bool realtime_turn_pause_in_inventory_is_off =
+                !get_option<bool>( "REALTIME_TURN_PAUSE_IN_INVENTORY" );
+        if( realtime_turn_pause_in_inventory_is_off ) {
+            int moves_elapsed = current_turn.moves_elapsed();
+            const bool realtime_turn_passed_message =
+                            get_option<bool>( "REALTIME_TURN_PASSED_MESSAGE" );
+            if( realtime_turn_passed_message && g->u.get_speed() * 2 < moves_elapsed) {
+                add_msg( m_info, _("you passed %.1f seconds."), moves_elapsed / 100.0 );
+            }
+            u.mod_moves( -moves_elapsed );
+        }
     }
     gamemode->post_action( act );
 

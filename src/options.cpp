@@ -66,6 +66,7 @@ std::vector<options_manager::id_and_option> options_manager::lang_options = {
     { "fr", no_translation( R"(Français)" ) },
     { "hu", no_translation( R"(Magyar)" ) },
     { "ja", no_translation( R"(日本語)" ) },
+    { "ja_variant", no_translation( R"(日本語_variant)" ) },
     { "ko", no_translation( R"(한국어)" ) },
     { "pl", no_translation( R"(Polski)" ) },
     { "pt_BR", no_translation( R"(Português (Brasil))" )},
@@ -1223,6 +1224,15 @@ void options_manager::add_options_general()
          0.0, 10.0, 0.0, 0.05
        );
 
+    add( "REALTIME_TURN_PASSED_MESSAGE", "general", translate_marker( "Realtime turn passed message" ),
+         translate_marker( "If true, when player passed turn, game will show message about it." ),
+         false
+       );
+    add( "REALTIME_TURN_PAUSE_IN_INVENTORY", "general", translate_marker( "Realtime turn pause in inventory" ),
+         translate_marker( "If true, monsters will not take turn during opening inventory or other menu." ),
+         false
+       );
+
     add_empty_line();
 
     add( "AUTOSAVE", "general", translate_marker( "Autosave" ),
@@ -1607,6 +1617,13 @@ void options_manager::add_options_interface()
         std::make_tuple( 10, translate_marker( "Fast" ) )
     },
     30, 30, COPT_CURSES_HIDE );
+
+    add_empty_line();
+
+    add( "STOP_IME_AUTOENABLE", "interface", translate_marker( "Stop ime autoenable" ),
+         translate_marker( "Stop ime autoenable" ),
+         false);
+
 
 }
 
@@ -2093,6 +2110,36 @@ void options_manager::add_options_world_default()
     add( "BLACK_ROAD", "world_default", translate_marker( "Surrounded start" ),
          translate_marker( "If true, spawn zombies at shelters.  Makes the starting game a lot harder." ),
          false
+       );
+
+    add_empty_line();
+
+    add( "EXCREMENT_FEATURE", "world_default", translate_marker( "Excrement feature" ),
+         translate_marker( "Player need excrement after consume food." ),
+         true
+       );
+    add( "HENTAI_EXTEND", "world_default", translate_marker( "Hentai exteneds" ),
+         translate_marker( "Extends feature of packed hentai mod more when it enabled. if false, like original hentai mod experience." ),
+         false
+       );
+
+    add_empty_line();
+
+    add( "ACID_RAIN", "world_default", translate_marker( "Acid rain" ),
+         translate_marker( "set acid rain frequency." ),
+         0, 100, 20
+       );
+
+    add( "VARIANT_WEATHER_PATTERN", "world_default", translate_marker( "Variant weather pattern" ),
+         translate_marker( "If true, apply variant modded weather pattern. It generally increases rainstorm." ),
+         false
+       );
+
+    add_empty_line();
+
+    add( "MAX_CRAFT_BATCH_SIZE", "world_default", translate_marker( "Maximum craft batch size" ),
+         translate_marker( "Set maximum batch size of crafting." ),
+         20, 1000, 20
        );
 
     add_empty_line();

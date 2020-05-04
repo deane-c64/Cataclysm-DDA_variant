@@ -15,6 +15,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <chrono>
 
 #include "calendar.h"
 #include "cata_utility.h"
@@ -648,6 +649,8 @@ class player : public Character
         /** Checked each turn during "lying_down", returns true if the player falls asleep */
         bool can_sleep();
 
+        std::pair<std::string, nc_color> get_excrete_description() const;
+
     private:
         /** last time we checked for sleep */
         time_point last_sleep_check = calendar::turn_zero;
@@ -1035,6 +1038,11 @@ class player : public Character
         void disarm( npc &target );
 
         std::set<tripoint> camps;
+
+        /**
+         * use for measure waiting time
+         */
+        std::chrono::system_clock::time_point start_time = std::chrono::system_clock::now();
 
     protected:
 

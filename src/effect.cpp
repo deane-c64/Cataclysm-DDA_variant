@@ -27,6 +27,35 @@ static const efftype_id effect_tied( "tied" );
 static const efftype_id effect_webbed( "webbed" );
 static const efftype_id effect_weed_high( "weed_high" );
 
+// littlemaid order things
+const efftype_id effect_littlemaid_play( "littlemaid_play" );
+const efftype_id effect_littlemaid_itemize( "littlemaid_itemize" );
+const efftype_id effect_littlemaid_talk( "littlemaid_talk" );
+
+// littlemaid order status things
+const efftype_id effect_littlemaid_stay( "littlemaid_stay" );
+const efftype_id effect_littlemaid_speak_off( "littlemaid_speak_off" );
+
+// littlemaid play things
+const efftype_id effect_littlemaid_in_kiss( "littlemaid_in_kiss" );
+const efftype_id effect_littlemaid_in_petting( "littlemaid_in_petting" );
+const efftype_id effect_littlemaid_in_service( "littlemaid_in_service" );
+const efftype_id effect_littlemaid_in_special( "littlemaid_in_special" );
+
+// littlemaid playing status things
+const efftype_id effect_happiness( "happiness" );
+const efftype_id effect_comfortness( "comfortness" );
+const efftype_id effect_ecstasy( "ecstasy" );
+const efftype_id effect_maid_fatigue( "maid_fatigue" );
+
+// littlemaid auto move things
+const efftype_id effect_littlemaid_goodnight( "littlemaid_goodnight" );
+
+const efftype_id effect_bind_by_custom_activity( "effect_bind_by_custom_activity" );
+
+// for hentai
+const efftype_id effect_movingdoing( "movingdoing" );
+
 static const trait_id trait_LACTOSE( "LACTOSE" );
 static const trait_id trait_VEGETARIAN( "VEGETARIAN" );
 
@@ -1209,6 +1238,14 @@ static const std::unordered_set<efftype_id> hardcoded_movement_impairing = {{
         effect_lightsnare,
         effect_tied,
         effect_webbed,
+        effect_littlemaid_stay,
+        effect_littlemaid_in_kiss,
+        effect_littlemaid_in_petting,
+        effect_littlemaid_in_service,
+        effect_littlemaid_in_special,
+        effect_littlemaid_goodnight,
+        effect_movingdoing,
+        effect_bind_by_custom_activity,
     }
 };
 

@@ -530,7 +530,7 @@ void game::init_ui( const bool resized )
     w_minimap = w_minimap_ptr = catacurses::newwin( MINIMAP_HEIGHT, MINIMAP_WIDTH, point( _x, _y ) );
     werase( w_minimap );
 
-    w_panel_adm = w_panel_adm_ptr = catacurses::newwin( 20, 75, point( ( TERMX / 2 ) - 38,
+    w_panel_adm = w_panel_adm_ptr = catacurses::newwin( 24, 75, point( ( TERMX / 2 ) - 38,
                                     ( TERMY / 2 ) - 10 ) );
     werase( w_panel_adm );
     // need to init in order to avoid crash. gets updated by the panel code.
@@ -2333,6 +2333,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "construct" );
     ctxt.register_action( "disassemble" );
     ctxt.register_action( "sleep" );
+    ctxt.register_action( "excretion" );
     ctxt.register_action( "control_vehicle" );
     ctxt.register_action( "auto_travel_mode" );
     ctxt.register_action( "safemode" );
@@ -2905,6 +2906,13 @@ spell_events &game::spell_events_subscriber()
 
 bool game::save()
 {
+    if( is_debug_touched ) {
+        if ( !query_yn( _("You touched debug menu in this session, are you sure to save?") ) ) {
+            add_msg( m_warning ,_( "Aborted saving game." ) );
+            return false;
+        }
+    }
+
     try {
         if( !save_player_data() ||
             !save_factions_missions_npcs() ||
@@ -5391,6 +5399,11 @@ void game::examine( const tripoint &examp )
     if( c != nullptr ) {
         monster *mon = dynamic_cast<monster *>( c );
         if( mon != nullptr && mon->has_effect( effect_pet ) && !u.is_mounted() ) {
+            if( monexamine::pet_menu( *mon ) ) {
+                return;
+            }
+        } else if ( mon != nullptr && ( mon->has_flag( MF_LITTLE_MAID ) || mon->has_flag( MF_SHOGGOTH_MAID ) ) ) {
+            // FIXME probably can open pet menu even hostile maid
             if( monexamine::pet_menu( *mon ) ) {
                 return;
             }
@@ -9413,6 +9426,103 @@ void game::place_player_overmap( const tripoint &om_dest )
     // update weather now as it could be different on the new location
     weather.nextweather = calendar::turn;
     place_player( player_pos );
+}
+
+void game::ftl_drive( const tripoint &om_dest, vehicle& veh )
+{
+    sfx::play_variant_sound( "ftl", "jump", 100 );
+
+    std::vector<monster*> passenger_list;
+    std::vector<npc*> passenger_list_npc;
+
+    // remove and store monster and NPC on vehicle
+    for( auto const &part : veh.get_avail_parts( VPFLAG_BOARDABLE ) ) {
+
+        if( part.pos() == u.pos() ){
+            continue;
+        }
+
+        npc *passenger_npc = critter_at<npc>( part.pos() );
+        if( passenger_npc != nullptr ){
+            passenger_list_npc.push_back( passenger_npc );
+            continue;
+        }
+
+        monster *passenger = critter_at<monster>( part.pos() );
+        if( passenger != nullptr ){
+            passenger_list.push_back( passenger );
+            remove_zombie( *passenger );
+            continue;
+        }
+
+    }
+    // remove and store vehicle
+    std::unique_ptr<vehicle> warping_veh = m.detach_vehicle(&veh);
+
+    // mostly copy pesta from game::place_player_overmap
+    // vvvvv
+
+    // if player is teleporting around, they dont bring their horse with them
+    if( u.is_mounted() ) {
+        u.remove_effect( effect_riding );
+        u.mounted_creature->remove_effect( effect_ridden );
+        u.mounted_creature = nullptr;
+    }
+    // offload the active npcs.
+    unload_npcs();
+    for( monster &critter : all_monsters() ) {
+        despawn_monster( critter );
+    }
+//    if( u.in_vehicle ) {
+//        m.unboard_vehicle( u.pos() );
+//    }
+    const int minz = m.has_zlevels() ? -OVERMAP_DEPTH : get_levz();
+    const int maxz = m.has_zlevels() ? OVERMAP_HEIGHT : get_levz();
+    for( int z = minz; z <= maxz; z++ ) {
+        m.clear_vehicle_cache( z );
+        m.clear_vehicle_list( z );
+    }
+    m.access_cache( get_levz() ).map_memory_seen_cache.reset();
+    // offset because load_map expects the coordinates of the top left corner, but the
+    // player will be centered in the middle of the map.
+    const tripoint map_om_pos( tripoint( 2 * om_dest.x, 2 * om_dest.y,
+                                         om_dest.z ) + point( -HALF_MAPSIZE, -HALF_MAPSIZE ) );
+    const tripoint player_pos( u.pos().xy(), map_om_pos.z );
+    load_map( map_om_pos );
+
+    // restore vehicle
+    m.place_vehicle_ftl( std::move(warping_veh), om_dest );
+    // restore npc
+    for( npc* passenger_npc : passenger_list_npc) {
+        //passenger_npc->spawn_at_precise( { get_levx(), get_levy() }, passenger_npc->pos() );
+        tripoint npc_warp_dest_pos = passenger_npc->pos();
+        npc_warp_dest_pos.z = om_dest.z;
+        passenger_npc->setpos( npc_warp_dest_pos );
+    }
+    // restore monster
+    for( monster* passenger : passenger_list) {
+        int fallback_radius = 2;
+        // TODO handle case that when if monster does not placed
+        // monster *const placed =
+        tripoint monster_warp_dest_pos = passenger->pos();
+        monster_warp_dest_pos.z = om_dest.z;
+        place_critter_around(
+            make_shared_fast<monster>( *passenger ),
+            monster_warp_dest_pos,
+            fallback_radius );
+    }
+
+    load_npcs();
+    m.spawn_monsters( true ); // Static monsters
+    update_overmap_seen();
+    // update weather now as it could be different on the new location
+    weather.nextweather = calendar::turn;
+
+    place_player( player_pos );
+
+    // ^^^^^
+    // end of copy pesta
+
 }
 
 bool game::phasing_move( const tripoint &dest_loc )

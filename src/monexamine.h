@@ -2,6 +2,8 @@
 #ifndef MONEXAMINE_H
 #define MONEXAMINE_H
 
+#include "custom_activity.h"
+
 class monster;
 
 namespace monexamine
@@ -32,5 +34,15 @@ void attach_or_remove_saddle( monster &z );
 *and amount the times per day you can milk the monster.
 */
 void milk_source( monster &source_mon );
+
+void maid_stay_or_follow( monster &z );
+void maid_itemize( monster &z );
+void maid_toggle_speak( monster &z );
+void maid_toggle_wipe_floor( monster &z );
+void maid_play( monster &z );
+void maid_change_costume( monster &z );
+void start_custom_activity( monster &z, custom_activity *c_act);
+void cubi_allow_seduce_friendlyfire( monster &z );
+
 } // namespace monexamine
 #endif

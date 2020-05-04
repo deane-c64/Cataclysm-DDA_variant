@@ -9720,6 +9720,230 @@ int iuse::magic_8_ball( player *p, item *it, bool, const tripoint & )
     return 0;
 }
 
+int iuse::underground_sonar( player *p, item *, bool, const tripoint &pt )
+{
+
+    if( pt.z == -10){
+        // bottom of the map
+        p->add_msg_if_player( m_neutral, _( "No response from device." ) );
+        return 0;
+    }
+    tripoint under_foot(pt.x, pt.y, pt.z - 1);
+
+    if ( g->m.passable( under_foot ) ){
+        p->add_msg_if_player( m_good, _( "Device detected underground space!" ) );
+    } else {
+        p->add_msg_if_player( m_neutral, _( "No response from device." ) );
+    }
+
+    return 0;
+}
+
+int iuse::naming( player *p, item *, bool, const tripoint & )
+{
+    if( p->is_npc() ) {
+        return 0;
+    }
+    const std::function<bool( const tripoint & )> f = [&]( const tripoint & pnt ) {
+        return g->critter_at<player>( pnt ) != nullptr;
+    };
+    const cata::optional<tripoint> pnt_ = choose_adjacent_highlight( _( "Use to whom?" ),
+                                            _( "There is no one to use to nearby." ), f, false );
+    if( !pnt_ ) {
+        return 0;
+    }
+    const tripoint &pnt = *pnt_;
+    if( player *const target = g->critter_at<player>( pnt ) ) {
+        if( target != nullptr ) {
+            std::string filterstring = target->name;
+            string_input_popup popup;
+            popup.title( _( "Naming:" ) )
+            .width( 85 ).description( string_format( _( "Target:\n%s\n" ), target->name ) )
+            .edit( filterstring );
+            if( popup.confirmed() && !filterstring.empty() ) {
+                p->add_msg_if_player( m_info, _( "New name is %s!" ), filterstring );
+                target->name = filterstring;
+                return 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int iuse::spawn_artifact( player *p, item *, bool, const tripoint & )
+{
+    g->m.spawn_artifact( p->pos() );
+    p->add_msg_if_player( _( "For a moment you were seized with a strange feeling as if the world just got distorted." ) );
+    p->mod_moves( -100 );
+
+    return 1;
+}
+
+
+int iuse::place_beacon( player *p, item *, bool, const tripoint & )
+{
+    if( query_yn("Are you sure to place FTL beacon here?") ) {
+        const oter_id ftl_beacon( "ftl_beacon_south" );
+        overmap_buffer.ter_set( p->global_omt_location(), ftl_beacon );
+        add_msg( m_good, _("You placed FTL beacon.") );
+        return 1;
+    }
+    return 0;
+}
+
+
+/**
+ *  method name means 'called when use item named XXX_on',
+ *        *NOT* means making item active.
+ */
+int iuse::horde_beacon_on( player *p, item *it, bool t, const tripoint &pos )
+{
+    if( t ) { // call while active
+
+        std::string turn_per_summon;
+        // check and get monster_group from property
+        if( it->has_property( "turn_per_summon" ) ) {
+            turn_per_summon = it->get_property_string( "turn_per_summon" );
+        }
+        if ( turn_per_summon == "" ) {
+            debugmsg( "turn_per_summon is nothing! ja: Beacon No properties No turn_per_summon Ga Arimasen" );
+            return it->type->charges_to_use();
+        }
+
+        if( calendar::once_every( time_duration::from_turns( std::stoi(turn_per_summon) ) )) {
+            // once per 'turn per summon'
+            std::string mongroup_name_str;
+            // check and get monster_group from property
+            if( it->has_property( "monster_group" ) ) {
+                mongroup_name_str = it->get_property_string( "monster_group" );
+            }
+            if ( mongroup_name_str == "" ) {
+                debugmsg( "monster_group is nothing! ja: Beacon No properties No monster_group Ga Arimasen" );
+                return it->type->charges_to_use();
+            }
+
+            bool item_drop = false;
+            if( it->has_property( "item_drop" ) ) {
+                // ambigius answer means FALSE.
+                if( it->get_property_string( "item_drop" ) == "true" ||
+                        it->get_property_string( "item_drop" ) == "True") {
+                     item_drop = true;
+                 }
+            }
+
+            bool corpse_drop = false;
+            if( it->has_property( "corpse_drop" ) ) {
+                // ambigius answer means FALSE.
+                if( it->get_property_string( "corpse_drop" ) == "true" ||
+                        it->get_property_string( "corpse_drop" ) == "True") {
+                    corpse_drop = true;
+                }
+            }
+
+            bool quiet_death = false;
+            if( it->has_property( "quiet_death" ) ) {
+                // ambigius answer means FALSE.
+                if( it->get_property_string( "quiet_death" ) == "true" ||
+                        it->get_property_string( "quiet_death" ) == "True") {
+                    quiet_death = true;
+                }
+            }
+
+            const float PI = 3.14159;
+            const float SPAWN_ANGLE_WIDTH = 0.125;
+            float direction_radian = -1;
+            if( it->has_property( "direction_horde_from" ) ) {
+                // ambigius answer means FALSE.
+                if( it->get_property_string( "direction_horde_from" ) == "East" ||
+                    it->get_property_string( "direction_horde_from" ) == "east"){
+                    direction_radian = rng_float( PI * (0 - SPAWN_ANGLE_WIDTH ) , PI * (0 + SPAWN_ANGLE_WIDTH )  );
+                } else if( it->get_property_string( "direction_horde_from" ) == "North" ||
+                           it->get_property_string( "direction_horde_from" ) == "north"){
+                    direction_radian = rng_float( PI * (1.5 - SPAWN_ANGLE_WIDTH ) , PI * (1.5 + SPAWN_ANGLE_WIDTH )  );
+                } else if( it->get_property_string( "direction_horde_from" ) == "West" ||
+                           it->get_property_string( "direction_horde_from" ) == "west"){
+                    direction_radian = rng_float( PI * (1 - SPAWN_ANGLE_WIDTH ) , PI * (1 + SPAWN_ANGLE_WIDTH )  );
+                } else if( it->get_property_string( "direction_horde_from" ) == "South" ||
+                           it->get_property_string( "diredirection_horde_fromction" ) == "south"){
+                    direction_radian = rng_float( PI * (0.5 - SPAWN_ANGLE_WIDTH ) , PI * (0.5 + SPAWN_ANGLE_WIDTH )  );
+                } else {
+                    debugmsg( "direction_horde_from is invalid value! ja: Beacon No properties No direction_horde_from Ga Machigatte imasu" );
+                    direction_radian = rng_float( 0, PI * 2);
+                }
+            } else {
+                direction_radian = rng_float( 0, PI * 2);
+            }
+
+            const mongroup_id group_id = mongroup_id( mongroup_name_str );
+            const mtype_id &mon_type = MonsterGroupManager::GetRandomMonsterFromGroup( group_id );
+
+            const int spawn_range_shortest = 50;
+            const int spawn_range_random = 5;
+            int radius = spawn_range_shortest + rng( 0, spawn_range_random );
+            int dist_x = roll_remainder(std::cos( direction_radian ) * radius);
+            int dist_y = roll_remainder(std::sin( direction_radian ) * radius);
+
+            tripoint spawn_pos = tripoint( pos.x + dist_x, pos.y + dist_y, pos.z );
+            monster *mon = g->place_critter_around( mon_type, spawn_pos , 3);
+            if( mon != nullptr ) {
+                mon->set_dest( pos );
+                if( item_drop ){
+                    // default is drop both item and corpse
+                } else if( corpse_drop ) {
+                    mon->no_extra_death_drops = true;
+                } else {
+                    mon->death_drops = false;
+                }
+                if( quiet_death ){
+                    mon->no_corpse_quiet = true;
+                }
+
+            }
+        }
+    } else { // Turning it off
+
+        std::string convert_to_off_item_id_string;
+        // check and get off_item_id from property
+        if( it->has_property( "item_id_to_turn_off" ) ) {
+            convert_to_off_item_id_string = it->get_property_string( "item_id_to_turn_off" );
+        }
+        if ( convert_to_off_item_id_string == "" ) {
+            debugmsg( "item_id_to_turn_off is nothing! ja: Beacon No properties No item_id_to_turn_off Ga Arimasen" );
+            return it->type->charges_to_use();
+        }
+
+        p->add_msg_if_player( _( "You turn off %s." ), it->tname() );
+        it->convert( convert_to_off_item_id_string ).active = false;
+    }
+    return it->type->charges_to_use();
+}
+
+/**
+ * read above horde_beacon_on.
+ */
+int iuse::horde_beacon_off( player *p, item *it, bool , const tripoint & )
+{
+    std::string convert_to_on_item_id_string;
+    // check and get on_item_id from property
+    if( it->has_property( "item_id_to_turn_on" ) ) {
+        convert_to_on_item_id_string = it->get_property_string( "item_id_to_turn_on" );
+    }
+    if ( convert_to_on_item_id_string == "" ) {
+        debugmsg( "item_id_to_turn_on is nothing! ja: Beacon No properties No item_id_to_turn_on Ga Arimasen" );
+        return it->type->charges_to_use();
+    }
+
+    if( !it->units_sufficient( *p ) ) {
+        p->add_msg_if_player( _( "%s is out of battery." ), it->tname() );
+    } else {
+        p->add_msg_if_player( _( "You turn on %s." ), it->tname() );
+        it->convert( convert_to_on_item_id_string ).active = true;
+    }
+    return it->type->charges_to_use();
+}
+
+
 void use_function::dump_info( const item &it, std::vector<iteminfo> &dump ) const
 {
     if( actor != nullptr ) {

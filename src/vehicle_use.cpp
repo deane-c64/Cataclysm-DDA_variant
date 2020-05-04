@@ -52,6 +52,8 @@
 #include "monster.h"
 #include "mtype.h"
 #include "weather.h"
+#include "overmap.h"
+#include "overmap_ui.h"
 
 static const activity_id ACT_HOTWIRE_CAR( "ACT_HOTWIRE_CAR" );
 static const activity_id ACT_RELOAD( "ACT_RELOAD" );
@@ -1549,11 +1551,13 @@ void vehicle::use_washing_machine( int p )
     } );
 
     auto items = get_items( p );
+    // variant dont need this
+    /*
     static const std::string filthy( "FILTHY" );
     bool filthy_items = std::all_of( items.begin(), items.end(), []( const item & i ) {
         return i.has_flag( filthy );
     } );
-
+    */
     bool cbms = std::any_of( items.begin(), items.end(), []( const item & i ) {
         return i.is_bionic();
     } );
@@ -1570,9 +1574,12 @@ void vehicle::use_washing_machine( int p )
                  name );
     } else if( detergents.empty() ) {
         add_msg( m_bad, _( "You need 5 charges of a detergent for the washing machine." ) );
+// washer can wash non filthy items in variant
+/*
     } else if( !filthy_items ) {
         add_msg( m_bad,
                  _( "You need to remove all non-filthy items from the washing machine to start the washing program." ) );
+*/
     } else if( cbms ) {
         add_msg( m_bad,
                  _( "CBMs can't be cleaned in a washing machine.  You need to remove them." ) );
@@ -1854,6 +1861,170 @@ void vehicle::use_bike_rack( int part )
     }
 }
 
+
+void vehicle::use_shower( int p , const std::string &mode ) {
+    (void)p;
+
+    int consume_water = 120;
+    int consume_battery = 2000;
+    int time_to_take = to_moves<int>( 10_minutes );
+    std::string message = _("Take a shower?");
+    if( mode == "hands" ){
+        consume_water = 20;
+        consume_battery = 200;
+        time_to_take = to_moves<int>( 1_minutes );
+        message = _("Wash hands?");
+    } else if( mode == "hot" ){
+        consume_battery = 5000;
+    }
+
+    if( fuel_left( "water_clean" ) < consume_water ) {
+        int litter = consume_water / 4;
+        add_msg( m_bad, _( "You need %d charges (%d litter) of clean water for take a shower." ),
+                consume_water, litter);
+        return;
+    }
+    if( fuel_left( "battery", true ) < consume_battery ) {
+        add_msg( m_bad, _( "You need %d charges of battery for take a shower." ),
+                consume_battery);
+        return;
+    }
+    bool wearing_not_water_friendly = false;
+    for( auto cloth : g->u.worn ){
+
+        if( mode == "hands"){
+            if( !cloth.has_flag("WATER_FRIENDLY") &&
+                    (cloth.covers( bp_hand_l ) || cloth.covers( bp_hand_r )) ){
+                wearing_not_water_friendly = true;
+                break;
+            }
+        } else if( !cloth.has_flag("WATER_FRIENDLY") ){
+            wearing_not_water_friendly = true;
+            break;
+        }
+    }
+    if( wearing_not_water_friendly ) {
+        if( mode == "hands" ) {
+            add_msg( m_bad,
+                     _( "You must take off all not water friendly gloves to wash hands." ) );
+        } else {
+            add_msg( m_bad,
+                     _( "You must take off all not water friendly clothes to take a shower." ) );
+        }
+        return;
+    }
+    if( query_yn( _( "%s This takes %s clean water and %s battery charge."),
+            message, consume_water, consume_battery) ) {
+        drain( "water_clean", consume_water );
+        discharge_battery( consume_battery );
+        g->u.assign_activity(player_activity(activity_id( "ACT_TAKE_SHOWER" ),
+                time_to_take , -1, 0, "taking shower" ));
+        g->u.activity.str_values.push_back( mode );
+    }
+}
+
+void vehicle::use_toilet( int p ) {
+
+    auto items = get_items( p );
+    bool non_excretive = std::any_of( items.begin(), items.end(), []( const item & i ) {
+        return !( i.made_of(material_id("feces")) || i.made_of(material_id("paper")) );
+    } );
+
+    if( items.empty() ) {
+        add_msg( m_bad,
+                 _( "Toilet is empty." ) );
+    } else if( fuel_left( "water" ) < 12 && fuel_left( "water_clean" ) < 12 ) {
+        add_msg( m_bad, _( "You need 12 charges of water for flush toilet." ),
+                 name );
+    } else if( non_excretive ) {
+        add_msg( m_bad,
+                 _( "There are non excretive item on toilet." ) );
+    } else {
+
+        if( fuel_left( "water" ) >= 12 ) {
+            drain( "water", 12 );
+        } else {
+            drain( "water_clean", 12 );
+        }
+
+        items.clear();
+        add_msg( m_good, _( "You flushed toilet." ) );
+    }
+
+}
+
+bool vehicle::is_available_washlet_resource( ){
+    bool water = (4 <= fuel_left( "water" ) || 4 <= fuel_left( "water_clean" ));
+    bool battery = (500 <= fuel_left( "battery", true ));
+    return water && battery;
+}
+void vehicle::consume_washlet_resource( ){
+    if( 4 <= fuel_left( "water_clean" ) ) {
+        drain( "water_clean", 4 );
+    } else {
+        drain( "water", 4 );
+    }
+    drain( "battery", 500 );
+}
+
+void vehicle::ftl_drive( int ) {
+
+    if ( 100 <= ftl_charge_percentage ){
+        // fuel check
+        bool ftl_fuel_is_not_enough = !g->u.crafting_inventory().has_charges( "plut_cell", 1 );
+        if( ftl_fuel_is_not_enough ) {
+            add_msg( m_bad, _("You have not plutnium cell, you need one plutnium cell to FTL drive.") );
+            return;
+        }
+        // select destination
+        popup( _( "Choose beacon for destination of FTL drive." ) );
+        const tripoint om_dest( ui::omap::choose_point() );
+        if( om_dest == overmap::invalid_tripoint ) {
+            // cancel
+            add_msg( m_neutral, _("FTL drive canceled. re-choose destination.") );
+            return;
+        }
+        // beacon check
+        const oter_id &dest_ter_id = overmap_buffer.ter( om_dest );
+        if( dest_ter_id->get_name() != "FTL Beacon" ) {
+            add_msg( m_neutral, _("choose center of FTL beacon.") );
+            return;
+        }
+        // fuel consume
+        std::vector<item_comp> ftl_fuel;
+        ftl_fuel.push_back( item_comp( "plut_cell", 1 ) );
+        g->u.consume_items( ftl_fuel, 1, is_crafting_component );
+
+        ftl_charge_percentage = 0;
+        ftl_is_charging = false;
+
+        // do FTL drive
+        g->ftl_drive(om_dest, *this);
+
+    } else if ( ftl_is_charging ) {
+        // FTL charge started but still not complete
+        popup( _( "FTL drive is charging now (%d%%), still wait at pilot seat." ), ftl_charge_percentage );
+    } else {
+        // start FTL charge
+        if( !ftl_pilot_is_manned() ) {
+            add_msg( m_bad, _( "To start FTL charge, It need at least one manned pilot control. Try again from just on pilot seat, or make NPC sit to pirot seat." ) );
+            return;
+        }
+        // if dont have fuel, show warning
+        bool ftl_fuel_is_not_enough = !g->u.crafting_inventory().has_charges( "plut_cell", 1 );
+        if( ftl_fuel_is_not_enough ) {
+            // long message, my bad habit :(
+            add_msg( m_warning, _( "You are not having plutnium cell. you need one plutnium cell for FTL drive, and you must stay on seat during FTL charging. recommend to bring your plutonium cell before start FTL charging." ) );
+        }
+
+        if ( query_yn( _("Do start charging up FTL drive?")) ){
+            add_msg( m_neutral, _("You start up FTL drive charging. It is take 1 hour to full charge.") );
+            ftl_is_charging = true;
+        }
+    }
+
+}
+
 // Handles interactions with a vehicle in the examine menu.
 void vehicle::interact_with( const tripoint &pos, int interact_part )
 {
@@ -1903,17 +2074,40 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
     const int workbench_part = avail_part_with_feature( interact_part, "WORKBENCH", true );
     const bool has_workbench = workbench_part >= 0;
 
+    const int shower_part = avail_part_with_feature( interact_part, "SHOWER", true );
+    const bool has_shower = shower_part >= 0;
+
+    const int toilet_part = avail_part_with_feature( interact_part, "TOILET", true );
+    const bool has_toilet = toilet_part >= 0;
+
+    const auto ftl_engine_part_range = get_avail_parts( "FTL_ENGINE" );
+    const bool has_ftl_engine = ftl_engine_part_range.begin() != ftl_engine_part_range.end();
+
     enum {
         EXAMINE, TRACK, CONTROL, CONTROL_ELECTRONICS, GET_ITEMS, GET_ITEMS_ON_GROUND, FOLD_VEHICLE, UNLOAD_TURRET, RELOAD_TURRET,
         USE_HOTPLATE, FILL_CONTAINER, DRINK, USE_WELDER, USE_PURIFIER, PURIFY_TANK, USE_AUTOCLAVE, USE_WASHMACHINE, USE_DISHWASHER,
         USE_MONSTER_CAPTURE, USE_BIKE_RACK, USE_HARNESS, RELOAD_PLANTER, WORKBENCH, USE_TOWEL, PEEK_CURTAIN,
+        SHOWER_HAND, SHOWER, SHOWER_HOT,
+        TOILET,
+        LIGHTMODE_CARGO, LIGHTMODE_TURRET,
+        FTL_DRIVE
+
     };
     uilist selectmenu;
 
     selectmenu.addentry( EXAMINE, true, 'e', _( "Examine vehicle" ) );
-    selectmenu.addentry( TRACK, true, keybind( "TOGGLE_TRACKING" ), tracking_toggle_string() );
     if( has_controls ) {
         selectmenu.addentry( CONTROL, true, 'v', _( "Control vehicle" ) );
+        selectmenu.addentry( TRACK, true, keybind( "TOGGLE_TRACKING" ), tracking_toggle_string() );
+
+        selectmenu.addentry( LIGHTMODE_CARGO  , true, 'C',
+                lightmode_cargo  ? _("Toggle Lightmode cargo : ON") : _("Toggle Lightmode cargo : OFF"));
+        selectmenu.addentry( LIGHTMODE_TURRET  , true, 'T',
+                lightmode_turret ? _("Toggle Lightmode turret: ON") : _("Toggle Lightmode turret: OFF"));
+
+        if( has_ftl_engine ) {
+            selectmenu.addentry( FTL_DRIVE  , true, 'F', _("FTL Drive") );
+        }
     }
     if( has_electronics ) {
         selectmenu.addentry( CONTROL_ELECTRONICS, true, keybind( "CONTROL_MANY_ELECTRONICS" ),
@@ -1988,6 +2182,14 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
     if( has_workbench ) {
         selectmenu.addentry( WORKBENCH, true, '&', string_format( _( "Craft at the %s" ),
                              parts[workbench_part].name() ) );
+    }
+    if( has_shower ) {
+        selectmenu.addentry( SHOWER_HAND, true, 'W', _( "Wash hands" ) );
+        selectmenu.addentry( SHOWER, true, 'S', _( "Take a shower" ) );
+        selectmenu.addentry( SHOWER_HOT, true, 'H', _( "Take a hot shower" ) );
+    }
+    if( has_toilet ) {
+        selectmenu.addentry( TOILET, true, 'F', string_format( _( "Flush toilet" ) ) );
     }
 
     int choice;
@@ -2161,6 +2363,35 @@ void vehicle::interact_with( const tripoint &pos, int interact_part )
             iexamine::workbench_internal( g->u, pos, vpart_reference( *this, workbench_part ) );
             return;
         }
+        case SHOWER_HAND: {
+            use_shower( shower_part , "hands");
+            return;
+        }
+        case SHOWER: {
+            use_shower( shower_part , "normal");
+            return;
+        }
+        case SHOWER_HOT: {
+            use_shower( shower_part , "hot");
+            return;
+        }
+        case TOILET: {
+            use_toilet( toilet_part );
+            return;
+        }
+        case LIGHTMODE_CARGO: {
+            lightmode_cargo = !lightmode_cargo;
+            return;
+        }
+        case LIGHTMODE_TURRET: {
+            lightmode_turret = !lightmode_turret;
+            return;
+        }
+        case FTL_DRIVE: {
+            ftl_drive( 0 );
+            return;
+        }
+
     }
     return;
 }

@@ -35,6 +35,7 @@
 #include "colony.h"
 #include "player_activity.h"
 #include "regional_settings.h"
+#include "morale_types.h"
 
 static const activity_id ACT_WAIT_WEATHER( "ACT_WAIT_WEATHER" );
 
@@ -57,6 +58,11 @@ static const std::string flag_SUN_GLASSES( "SUN_GLASSES" );
 static bool is_player_outside()
 {
     return g->m.is_outside( point( g->u.posx(), g->u.posy() ) ) && g->get_levz() >= 0;
+}
+
+static bool is_creature_outside(const Creature *z)
+{
+    return g->m.is_outside( point( z->posx(), z->posy() ) ) && g->get_levz() >= 0;
 }
 
 #define THUNDER_CHANCE 50
@@ -126,6 +132,9 @@ inline void proc_weather_sum( const weather_type wtype, weather_sum &data,
             break;
         case WEATHER_ACID_RAIN:
             data.acid_amount += 8 * to_turns<int>( tick_size );
+            break;
+        case WEATHER_ACID_STORM:
+            data.acid_amount += 12 * to_turns<int>( tick_size );
             break;
         default:
             break;
@@ -491,25 +500,39 @@ void weather_effect::lightning()
  */
 void weather_effect::light_acid()
 {
-    if( calendar::once_every( 1_minutes ) && is_player_outside() ) {
-        if( g->u.weapon.has_flag( "RAIN_PROTECT" ) && !one_in( 3 ) ) {
-            add_msg( _( "Your %s protects you from the acidic drizzle." ), g->u.weapon.tname() );
-        } else {
-            if( g->u.worn_with_flag( "RAINPROOF" ) && !one_in( 4 ) ) {
-                add_msg( _( "Your clothing protects you from the acidic drizzle." ) );
-            } else {
-                bool has_helmet = false;
-                if( g->u.is_wearing_power_armor( &has_helmet ) && ( has_helmet || !one_in( 4 ) ) ) {
-                    add_msg( _( "Your power armor protects you from the acidic drizzle." ) );
-                } else {
-                    add_msg( m_warning, _( "The acid rain stings, but is mostly harmless for now…" ) );
-                    if( one_in( 10 ) && ( g->u.get_pain() < 10 ) ) {
-                        g->u.mod_pain( 1 );
-                    }
-                }
+    if( calendar::once_every( 10_turns ) && is_player_outside() ) {
+
+        // wielding unbrella does completely protects from acid drizzle
+        if( g->u.weapon.has_flag( "RAIN_PROTECT" ) ) {
+            if( one_in( 10 ) ) {
+                add_msg( _( "Your umbrella protects you from the acid rain." ) );
             }
+            return;
+        }
+        // wearing poewer armer with helmet does completely protects from acid drizzle
+        bool has_helmet = false;
+        if( g->u.is_wearing_power_armor( &has_helmet ) && ( has_helmet ) ) {
+            if( one_in( 10 ) ) {
+                add_msg( _( "Your power armor protects you from the acid rain." ) );
+            }
+            return;
+        }
+        // wearing RAINPROOF clothes completely protects from acid drizzle
+        if( g->u.worn_with_flag( "RAINPROOF" ) ) {
+            if( one_in( 10 ) ) {
+                add_msg( _( "Your clothing protects you from the acid rain." ) );
+            }
+            return;
+        }
+        if( one_in( 10 )) {
+            add_msg( m_warning, _( "The acid rain stings, but is mostly harmless for now…" ) );
+        }
+        // sightly pain, mostly harmless
+        if( one_in( 20 ) && ( g->u.get_pain() < 10 ) ) {
+            g->u.mod_pain( rng( 1, 5 ) );
         }
     }
+
 }
 
 /**
@@ -518,23 +541,131 @@ void weather_effect::light_acid()
  */
 void weather_effect::acid()
 {
-    if( calendar::once_every( 2_turns ) && is_player_outside() ) {
-        if( g->u.weapon.has_flag( "RAIN_PROTECT" ) && one_in( 4 ) ) {
-            add_msg( _( "Your umbrella protects you from the acid rain." ) );
-        } else {
-            if( g->u.worn_with_flag( "RAINPROOF" ) && one_in( 2 ) ) {
-                add_msg( _( "Your clothing protects you from the acid rain." ) );
-            } else {
-                bool has_helmet = false;
-                if( g->u.is_wearing_power_armor( &has_helmet ) && ( has_helmet || !one_in( 2 ) ) ) {
-                    add_msg( _( "Your power armor protects you from the acid rain." ) );
-                } else {
-                    add_msg( m_bad, _( "The acid rain burns!" ) );
-                    if( one_in( 2 ) && ( g->u.get_pain() < 100 ) ) {
-                        g->u.mod_pain( rng( 1, 5 ) );
-                    }
-                }
+    // effect for monster
+    if( calendar::once_every( 59_turns ) ){
+        for( monster &critter : g->all_monsters() ) {
+            if( one_in( 10 ) && is_creature_outside( &critter ) ) {
+                // 1 per about 590 turn
+                critter.apply_damage( nullptr, bp_torso, 1 );
             }
+        }
+    }
+
+    // effect for player
+    if( calendar::once_every( 10_turns ) && is_player_outside() ) {
+
+        // wielding unbrella does completely protects from normal acid rain
+        if( g->u.weapon.has_flag( "RAIN_PROTECT" ) ) {
+            if( one_in( 10 ) ) {
+                add_msg( _( "Your umbrella protects you from the acid rain." ) );
+            }
+            return;
+        }
+        // wearing poewer armer with helmet does completely protects from normal acid rain
+        bool has_helmet = false;
+        if( g->u.is_wearing_power_armor( &has_helmet ) && ( has_helmet ) ) {
+            if( one_in( 10 ) ) {
+                add_msg( _( "Your power armor protects you from the acid rain." ) );
+            }
+            return;
+        }
+        // wearing RAINPROOF clothes blocks 90% of normal acid rain
+        if( g->u.worn_with_flag( "RAINPROOF" ) && !one_in( 10 ) ) {
+            if( one_in( 10 ) ) {
+                add_msg( _( "Your clothing protects you from the acid rain." ) );
+            }
+            return;
+        }
+        if( one_in( 10 )) {
+            add_msg( m_bad, _( "The acid rain burns!" ) );
+        }
+        // pretty big pain ( up to about pain description color become light red )
+        // and slowly loses all body HP
+        if( one_in( 10 ) && ( g->u.get_pain() < 40 ) ) {
+            // 1 per about 33 turn
+            g->u.mod_pain( rng( 1, 5 ) );
+        }
+        if( one_in( 30 ) ) {
+            // 1 per about 300 turn
+            g->u.hurtall( 1, nullptr );
+            // XXX Hackey :(
+            // hurtall causes pain as same amount damage
+            // so i hope cancel it
+            g->u.mod_pain( -1 );
+        }
+    }
+}
+
+void weather_effect::acid_storm()
+{
+    // effect for monster
+    if( calendar::once_every( 59_turns ) ){
+        for( monster &critter : g->all_monsters() ) {
+            if( one_in( 10 ) && is_creature_outside( &critter ) ) {
+                // 1 per about 66 turn
+                critter.apply_damage( nullptr, bp_torso, 9 );
+            }
+        }
+    }
+
+    if( calendar::once_every( 10_turns ) && is_player_outside() ) {
+
+        // wielding unbrella blocks 90% of acid storm
+        if( g->u.weapon.has_flag( "RAIN_PROTECT" ) && !one_in( 10 )) {
+            if( one_in( 10 ) ) {
+                add_msg( _( "Your umbrella protects you from the acid rain." ) );
+            }
+            return;
+        }
+        // wearing poewer armer with helmet does completely protects from acid storm
+        bool has_helmet = false;
+        if( g->u.is_wearing_power_armor( &has_helmet ) && ( has_helmet ) ) {
+            if( one_in( 10 ) ) {
+                add_msg( _( "Your power armor protects you from the acid rain." ) );
+            }
+            return;
+        }
+        // wearing RAINPROOF clothes blocks 75% of acid storm
+        if( g->u.worn_with_flag( "RAINPROOF" ) && !one_in( 4 ) ) {
+            if( one_in( 10 ) ) {
+                add_msg( _( "Your clothing protects you from the acid rain." ) );
+            }
+            return;
+        }
+        if( one_in( 10 )) {
+            add_msg( m_bad, _( "The acid storm burns!" ) );
+        }
+        // about 10 times stronger than normal acid rain! RUN!
+        if( one_in( 3 ) && ( g->u.get_pain() < 100 ) ) {
+            // 1 per about 4 turn
+            g->u.mod_pain( rng( 5, 10 ) );
+        }
+        if( one_in( 3 ) ) {
+            // 1 per about 30 turn
+            g->u.hurtall( 1, nullptr );
+            // XXX Hackey :(
+            g->u.mod_pain( -1 );
+        }
+
+    }
+}
+
+void weather_effect::rainbow()
+{
+    if( calendar::once_every( 60_turns ) && is_player_outside() ) {
+        g->u.add_morale( MORALE_SAW_RAINBOW, 2, 20, 60_minutes, 30_minutes );
+        if( one_in( 5 ) ) {
+            add_msg( _( "Beautiful rainbow is coming out." ) );
+        }
+    }
+}
+
+void weather_effect::diamond_dust()
+{
+    if( calendar::once_every( 60_turns ) && is_player_outside() ) {
+        g->u.add_morale( MORALE_SAW_DIAMONDDUST, 2, 30, 60_minutes, 30_minutes );
+        if( one_in( 5 ) ) {
+            add_msg( _( "Beautiful Diamond dust is falling." ) );
         }
     }
 }
