@@ -3648,7 +3648,7 @@ void item::final_info( std::vector<iteminfo> &info, const iteminfo_query *parts,
     }
 
     // Recipes using this item as an ingredient
-    if ( get_source_mod_id() != "dda" && get_source_mod_id() != "" ) {
+    if ( get_source_mod_id() != "dda" && get_source_mod_id() != "core" && get_source_mod_id() != "" ) {
         insert_separation_line( info );
         std::string mod_name = mod_id( get_source_mod_id() ).obj().name();
         info.push_back( iteminfo( "DESCRIPTION",
