@@ -2064,6 +2064,11 @@ void monster::disable_special( const std::string &special_name )
     special_attacks.at( special_name ).enabled = false;
 }
 
+void monster::enable_special( const std::string &special_name )
+{
+    special_attacks.at( special_name ).enabled = true;
+}
+
 int monster::shortest_special_cooldown() const
 {
     int countdown = std::numeric_limits<int>::max();

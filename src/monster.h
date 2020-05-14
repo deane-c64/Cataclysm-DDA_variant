@@ -390,6 +390,7 @@ class monster : public Creature
         void set_special( const std::string &special_name, int time );
         /** Sets the enabled flag for the given special to false */
         void disable_special( const std::string &special_name );
+        void enable_special( const std::string &special_name );
         /** Return the lowest cooldown for an enabled special */
         int shortest_special_cooldown() const;
 
