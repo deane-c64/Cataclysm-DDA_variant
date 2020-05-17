@@ -70,6 +70,12 @@
 #include "vpart_position.h"
 #include "vpart_range.h"
 #include "weighted_list.h"
+#include "material.h"
+#include "int_id.h"
+#include "colony.h"
+#include "pimpl.h"
+#include "point.h"
+#include "item_enchant.h"
 
 static const mongroup_id GROUP_BLOB( "GROUP_BLOB" );
 static const mongroup_id GROUP_BREATHER( "GROUP_BREATHER" );
@@ -1183,7 +1189,8 @@ class jmapgen_loot : public jmapgen_piece
         void apply( mapgendata &dat, const jmapgen_int &x, const jmapgen_int &y ) const override {
             if( rng( 0, 99 ) < chance ) {
                 const Item_spawn_data *const isd = &result_group;
-                const std::vector<item> spawn = isd->create( calendar::start_of_cataclysm );
+                std::vector<item> spawn = isd->create( calendar::start_of_cataclysm );
+                enchant_manager::add_random_enchant_to_item( spawn );
                 dat.m.spawn_items( tripoint( rng( x.val, x.valmax ), rng( y.val, y.valmax ),
                                              dat.m.get_abs_sub().z ), spawn );
             }
@@ -5761,6 +5768,10 @@ std::vector<item *> map::place_items( const items_location &loc, const int chanc
                 e->ammo_set( e->ammo_default(), e->ammo_capacity() );
             }
         }
+        if( e != nullptr ){
+            enchant_manager::add_random_enchant_to_item( *e );
+        }
+
     }
     return res;
 }

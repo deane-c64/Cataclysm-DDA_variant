@@ -109,6 +109,8 @@
 #include "vitamin.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
+#include "ranged.h"
+#include "item_enchant.h"
 
 struct mutation_branch;
 struct oter_type_t;
@@ -2229,6 +2231,8 @@ void item::io( Archive &archive )
     archive.io( "light_dir", light.direction, nolight.direction );
 
     archive.io( "relic_data", relic_data );
+
+    archive.io( "item_enchant_list", item_enchant_list );
 
     item_controller->migrate_item( orig, *this );
 

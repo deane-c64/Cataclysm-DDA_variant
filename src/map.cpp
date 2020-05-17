@@ -91,6 +91,12 @@
 #include "vpart_range.h"
 #include "weather.h"
 #include "weighted_list.h"
+#include "enums.h"
+#include "int_id.h"
+#include "string_id.h"
+#include "construction.h"
+#include "flat_set.h"
+#include "item_enchant.h"
 
 static const mtype_id mon_zombie( "mon_zombie" );
 
@@ -4021,6 +4027,7 @@ std::vector<item *> map::spawn_items( const tripoint &p, const std::vector<item>
         return ret;
     }
     const bool swimmable = has_flag( "SWIMMABLE", p );
+
     for( const item &new_item : new_items ) {
 
         if( new_item.made_of( LIQUID ) && swimmable ) {

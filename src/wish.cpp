@@ -35,6 +35,16 @@
 #include "type_id.h"
 #include "ui.h"
 #include "uistate.h"
+#include "calendar.h"
+#include "color.h"
+#include "cursesdef.h"
+#include "item.h"
+#include "itype.h"
+#include "optional.h"
+#include "type_id.h"
+#include "flat_set.h"
+#include "point.h"
+#include "item_enchant.h"
 
 class wish_mutate_callback: public uilist_callback
 {
@@ -560,6 +570,9 @@ void debug_menu::wishitem( player *p, const tripoint &pos )
                 .edit( amount );
                 canceled = popup.canceled();
             }
+
+            enchant_manager::add_random_enchant_to_item( granted );
+
             if( !canceled ) {
                 did_amount_prompt = true;
                 if( p != nullptr ) {
