@@ -176,4 +176,7 @@ using construction_str_id = string_id<construction>;
 struct custom_activity;
 using custom_activity_id = string_id<custom_activity>;
 
+struct item_enchant;
+using item_enchant_id = string_id<item_enchant>;
+
 #endif // CATA_SRC_TYPE_ID_H
