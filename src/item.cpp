@@ -891,6 +891,9 @@ bool item::stacks_with( const item &rhs, bool check_components ) const
     if( item_vars != rhs.item_vars ) {
         return false;
     }
+    if( !item_enchant_list.empty() || !rhs.item_enchant_list.empty() ) {
+        return false;
+    }
     if( goes_bad() && rhs.goes_bad() ) {
         // Stack items that fall into the same "bucket" of freshness.
         // Distant buckets are larger than near ones.
@@ -3262,6 +3265,15 @@ void item::combat_info( std::vector<iteminfo> &info, const iteminfo_query *parts
             info.push_back( iteminfo( "DESCRIPTION",
                                       _( "* This item can be used to make <stat>reach "
                                          "attacks</stat>." ) ) );
+        }
+    }
+
+    if ( !item_enchant_list.empty() ) {
+        insert_separation_line( info );
+        info.push_back( iteminfo( "DESCRIPTION", _( "Enchant info" ) ) );
+        for( item_enchant enchant : item_enchant_list ) {
+            info.push_back( iteminfo( "DESCRIPTION",
+              string_format( "* %s (%d%%): %s ", _( enchant.name ) , static_cast<int>(enchant.effect_chance * 100), _( enchant.description ) ) ) );
         }
     }
 

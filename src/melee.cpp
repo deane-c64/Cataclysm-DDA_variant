@@ -514,8 +514,8 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id &f
         }
 
         for( item_enchant enchant : cur_weapon.item_enchant_list ) {
-            // debugmsg("to do, but hooray! : %d", cur_weapon.item_enchant_data.enchant_type);
             enchant_manager::invoke_damage_modifier_enchantment( d, enchant, t, cur_weapon, *this );
+
         }
 
         // Proceed with melee attack.

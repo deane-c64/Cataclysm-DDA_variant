@@ -107,6 +107,15 @@
 #include "vpart_range.h"
 #include "weather.h"
 #include "weather_gen.h"
+#include "type_id.h"
+#include "options.h"
+#include "flat_set.h"
+#include "handle_liquid.h"
+#include "item_group.h"
+#include "omdata.h"
+#include "point.h"
+#include "teleport.h"
+#include  "item_enchant.h"
 
 static const activity_id ACT_BURROW( "ACT_BURROW" );
 static const activity_id ACT_CHOP_LOGS( "ACT_CHOP_LOGS" );
@@ -10117,7 +10126,7 @@ int iuse::horde_beacon_off( player *p, item *it, bool , const tripoint & )
 
 int iuse::enchant_cleaner( player*, item* , bool, const tripoint & )
 {
-    item_location loc = game_menus::inv::titled_menu( g->u,  _( "cleaning enchant" ),
+    item_location loc = game_menus::inv::titled_menu( g->u,  _( "Select item to clean enchant" ),
                                         _( "You don't have any item." ) );
     if( !loc ) {
         add_msg( m_info, _( "Never mind." ) );
@@ -10127,6 +10136,36 @@ int iuse::enchant_cleaner( player*, item* , bool, const tripoint & )
     if( query_yn( string_format( _("Really clean all %s's enchant?") , loc->tname() ) ) ) {
         loc->item_enchant_list.clear();
         add_msg( m_info, _("All %s's enchant cleaned.") , loc->tname()  );
+    }
+    return 0;
+}
+
+int iuse::item_enchanter( player*, item *it, bool, const tripoint & )
+{
+    item_location loc = game_menus::inv::titled_menu( g->u,  _( "Select item to enchant" ),
+                                        _( "You don't have any item." ) );
+    if( !loc ) {
+        add_msg( m_info, _( "Never mind." ) );
+        return 0;
+    }
+
+    if( query_yn( string_format( _("Really enchant to %s?") , loc->tname() ) ) ) {
+
+        if( it->has_property( "enchant_id" ) ) {
+            std::string enchant_id_string = it->get_property_string( "enchant_id" );
+            item_enchant_id enchant_id = item_enchant_id( enchant_id_string );
+            item_enchant enchant = enchant_id.obj();
+
+            if (it->has_property( "enchant_effect_chance" )){
+                enchant.effect_chance = atof( it->get_property_string( "enchant_effect_chance" ).c_str() );
+            }
+
+            loc->item_enchant_list.push_back( enchant );
+            add_msg( m_info, _("Enchanted %s to %s.") , enchant.name , loc->tname() );
+        } else {
+            debugmsg( "no property enchant_id");
+        }
+        return 1;
     }
     return 0;
 }
