@@ -514,7 +514,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id &f
         }
 
         for( item_enchant enchant : cur_weapon.item_enchant_list ) {
-            enchant_manager::invoke_damage_modifier_enchantment( d, enchant, t, cur_weapon, static_cats<Character>(*this) );
+            enchant_manager::invoke_damage_modifier_enchantment( d, enchant, t, cur_weapon, static_cast<Character>(*this) );
 
         }
 
@@ -590,7 +590,7 @@ void Character::melee_attack( Creature &t, bool allow_special, const matec_id &f
             // weapon enchant process
             for( item_enchant enchant : cur_weapon.item_enchant_list ) {
                 // debugmsg("to do, but hooray! : %d", cur_weapon.item_enchant_data.enchant_type);
-                enchant_manager::invoke_enchantment_effect( enchant, t, cur_weapon, static_cats<Character>(*this) );
+                enchant_manager::invoke_enchantment_effect( enchant, t, cur_weapon, static_cast<Character>(*this) );
             }
 
         }
