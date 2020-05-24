@@ -2916,5 +2916,11 @@
     "category": "EXTENDED_DESCRIPTION",
     "name": "Describe terrain",
     "bindings": [ { "input_method": "keyboard", "key": "t" } ]
+  },
+  {
+    "type": "keybinding",
+    "name": "Sidebar memo",
+    "category": "DEFAULTMODE",
+    "id": "sidebar_memo"
   }
 ]

@@ -2499,6 +2499,7 @@ input_context get_default_mode_input_context()
     ctxt.register_action( "MOUSE_MOVE" );
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "SEC_SELECT" );
+    ctxt.register_action( "sidebar_memo" );
     return ctxt;
 }
 
@@ -12215,3 +12216,14 @@ void avatar_moves( const avatar &u, const map &m, const tripoint &p )
             u.get_movement_mode(), u.is_underwater(), p.z );
 }
 } // namespace cata_event_dispatch
+
+void game::edit_sidebar_memo() {
+
+    sidebar_memo_text = string_input_popup()
+                              .title( _( "Sidebar Memo (Max 40)" ) )
+                              .width( 50 )
+                              .text( sidebar_memo_text )
+                              .query_string();
+
+}
+
