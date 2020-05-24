@@ -20,5 +20,5 @@ const char *getVersionString()
 
 const char *getVariantVersionString()
 {
-    return "Variant_JP_0.E_r13_Latest_Experimental (based #10611)";
+    return "Variant_JP_0.E_r14_Latest_Experimental (based #10611)";
 }
