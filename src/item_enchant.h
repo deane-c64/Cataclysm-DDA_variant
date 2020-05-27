@@ -69,7 +69,7 @@ class item_enchant {
         emit_id emit_id_to_emit;
 
         int heal_amount;
-        heal_type heal_type;
+        heal_type heal_type_enchant;
 
         std::string message_on_trigger;
 
