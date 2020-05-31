@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "item.h"
 #include "type_id.h"
 #include "itype.h"
 

@@ -113,7 +113,6 @@ static const species_id SPECIES_CUBI( "CUBI" );
 static const itype_id itype_cash_card( "cash_card" );
 static const itype_id itype_id_military( "id_military" );
 
-static const skill_id skill_survival( "survival" );
 static const species_id species_ZOMBIE( "ZOMBIE" );
 
 bool monexamine::pet_menu( monster &z )
@@ -292,7 +291,7 @@ bool monexamine::pet_menu( monster &z )
     amenu.addentry( pet_healing, true, 'h', _( "Heal pet" ));
 
     const auto mon_item_id = z.type->revert_to_itype;
-    if( !mon_item_id.empty() ) {
+    if( !mon_item_id.is_empty() ) {
         amenu.addentry( revert_to_item, true, 'R', _( "Revert to Item" ));
 
     }
@@ -379,7 +378,7 @@ bool monexamine::pet_menu( monster &z )
         }
         // XXX hardcoding name of cubi who use LOVE_FRAME.
         // special attacks is in z.special_attacks, have to make to finding LOVE_FLAME or something.
-        if( z.type->id == "mon_greater_succubi" || z.type->id == "mon_greater_incubi" ){
+        if( z.type->id == mtype_id("mon_greater_succubi") || z.type->id == mtype_id("mon_greater_incubi") ){
             if( z.has_effect( effect_cubi_ban_love_flame ) ){
                 amenu.addentry( cubi_menu_love_fire, true, 'F', _( "Allow love fire magic" ));
             } else {
@@ -1339,8 +1338,9 @@ void monexamine::heal_pet( monster &z )
 
         if(med_com) {
             if( med_com->comesttype == "MED" ) {
-                std::string med_item_id = item.typeId();
-                if( med_item_id.find( "bandage" ) != std::string::npos ) {
+                itype_id med_item_id = item.typeId();
+                std::string med_item_id_str( med_item_id );
+                if( med_item_id_str.find( "bandage" ) != std::string::npos ) {
                     med_item_list.push_back( itemstack );
                 }
             }

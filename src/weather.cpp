@@ -74,10 +74,6 @@ static bool is_creature_outside(const Creature *z)
 #define THUNDER_CHANCE 50
 #define LIGHTNING_CHANCE 600
 
-static constexpr int THUNDER_CHANCE = 50;
-static constexpr int LIGHTNING_CHANCE = 600;
-
-
 /**
  * Glare.
  * Causes glare effect to player's eyes if they are not wearing applicable eye protection.

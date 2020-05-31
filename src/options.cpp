@@ -2307,6 +2307,7 @@ void options_manager::add_options_world_default()
        );
 }
 
+/*
 void options_manager::add_options_debug()
 {
     const auto add_empty_line = [&]() {
@@ -2382,6 +2383,7 @@ void options_manager::add_options_debug()
          true
        );
 }
+*/
 
 void options_manager::add_options_android()
 {

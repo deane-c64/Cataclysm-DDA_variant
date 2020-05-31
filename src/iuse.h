@@ -23,7 +23,6 @@ struct tripoint;
 // iuse methods returning a bool indicating whether to consume a charge of the item being used.
 namespace iuse
 {
-    public:
         // FOOD AND DRUGS (ADMINISTRATION)
         int sewage( player *, item *, bool, const tripoint & );
         int honeycomb( player *, item *, bool, const tripoint & );
@@ -145,7 +144,7 @@ namespace iuse
         int call_of_tindalos( player *, item *, bool, const tripoint & );
         int blood_draw( player *, item *, bool, const tripoint & );
         int mind_splicer( player *, item *, bool, const tripoint & );
-        static void cut_log_into_planks( player & );
+        void cut_log_into_planks( player & );
         int lumber( player *, item *, bool, const tripoint & );
         int chop_tree( player *, item *, bool, const tripoint & );
         int chop_logs( player *, item *, bool, const tripoint & );
@@ -182,7 +181,7 @@ namespace iuse
         int radglove( player *, item *, bool, const tripoint & );
         int robotcontrol( player *, item *, bool, const tripoint & );
         // Helper for validating a potential taget of robot control
-        static bool robotcontrol_can_target( player *, const monster & );
+        bool robotcontrol_can_target( player *, const monster & );
         int einktabletpc( player *, item *, bool, const tripoint & );
         int camera( player *, item *, bool, const tripoint & );
         int ehandcuffs( player *, item *, bool, const tripoint & );
@@ -238,11 +237,11 @@ namespace iuse
         int artifact( player *, item *, bool, const tripoint & );
 
         // Helper for listening to music, might deserve a better home, but not sure where.
-        static void play_music( player &p, const tripoint &source, int volume, int max_morale );
-        static int towel_common( player *, item *, bool );
+        void play_music( player &p, const tripoint &source, int volume, int max_morale );
+        int towel_common( player *, item *, bool );
 
         // Helper for handling pesky wannabe-artists
-        static int handle_ground_graffiti( player &p, item *it, const std::string &prefix,
+        int handle_ground_graffiti( player &p, item *it, const std::string &prefix,
                                            const tripoint &where );
 
 } // namespace iuse

@@ -1313,8 +1313,11 @@ void npc::execute_action( npc_action action )
                                 }
                             }
 
+                            // FIXME MERGE LATEST
                             if( best_food != nullptr ) {
-                                bool consumed_completely = consume_item( *best_food );
+                                // FIXME MERGE LATEST
+                                /*
+                                bool consumed_completely = consume_items( *best_food );
 
                                 if( consumed_completely ){
                                     if( best_food->is_food_container() || !can_consume_as_is( *best_food ) ) {
@@ -1325,6 +1328,7 @@ void npc::execute_action( npc_action action )
                                         loc.remove_item();
                                     }
                                 }
+                                */
                                 move_pause();
                                 break;
                             } else {

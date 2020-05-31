@@ -255,6 +255,7 @@ static const mtype_id mon_zombie_skeltal_minion( "mon_zombie_skeltal_minion" );
 
 static const bionic_id bio_uncanny_dodge( "bio_uncanny_dodge" );
 
+static const species_id ZOMBIE( "ZOMBIE" );
 static const species_id FUNGUS( "FUNGUS" );
 static const species_id INSECT( "INSECT" );
 static const species_id SPIDER( "SPIDER" );
@@ -5888,7 +5889,7 @@ bool mattack::littlemaid_action( monster *maid )
             // wiping floor liquid
             auto items = g->m.i_at( maid->pos() );
             auto new_end = std::remove_if( items.begin(), items.end(), []( const item & it ) {
-                return it.made_of( LIQUID );
+                return it.made_of( phase_id::LIQUID );
             } );
             bool is_maid_wiped = new_end != items.end();
             while( new_end != items.end() ) {
@@ -5907,12 +5908,13 @@ bool mattack::littlemaid_action( monster *maid )
         units::volume remaining_volume = 5_liter - maid->get_carried_volume();
         units::mass remaining_weight = maid->weight_capacity() - maid->get_carried_weight();
         if ( maid->storage_item ) {
-            remaining_volume += maid->storage_item->get_storage();
+            // FIXME MARGE LATEST: i dont know this error!
+            //remaining_volume += maid->storage_item->get_storage();
         }
         for( auto iter = stack.begin(); iter != stack.end(); ) {
             const item &one_of_item_on_ground = *iter;
 
-            if( one_of_item_on_ground.made_of_from_type( LIQUID ) ) {
+            if( one_of_item_on_ground.made_of_from_type( phase_id::LIQUID ) ) {
                 iter++;
                 continue;
             }
@@ -6153,7 +6155,7 @@ bool mattack::shoggothmaid_action( monster *maid )
            // wiping floor liquid
            auto items = g->m.i_at( maid->pos() );
            auto new_end = std::remove_if( items.begin(), items.end(), []( const item & it ) {
-               return it.made_of( LIQUID );
+               return it.made_of( phase_id::LIQUID );
            } );
            bool is_maid_wiped = new_end != items.end();
            while( new_end != items.end() ) {
@@ -6577,14 +6579,14 @@ bool mattack::melee_bot( monster *bot )
                                        _( "The %1$s's %3$s hit your %2$s!" ),
                                        _( "The %1$s's %3$s hit <npcname>'s %2$s!" ),
                                        bot->name(),
-                                       body_part_name_accusative( hit ),
+                                       body_part_name_accusative( convert_bp( hit ).id() ),
                                        attack_name
                                        );
     } else {
         target->add_msg_player_or_npc( _( "The %1$s's %3$s hit your %2$s, but it doesn't affect." ),
                                        _( "The %1$s's %3$s hit <npcname>'s %2$s, but it doesn't affect." ),
                                        bot->name(),
-                                       body_part_name_accusative( hit ),
+                                       body_part_name_accusative( convert_bp( hit ).id() ),
                                        attack_name
                                        );
     }

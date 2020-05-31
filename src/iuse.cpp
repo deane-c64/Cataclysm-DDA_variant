@@ -10193,7 +10193,7 @@ int iuse::horde_beacon_on( player *p, item *it, bool t, const tripoint &pos )
         }
 
         p->add_msg_if_player( _( "You turn off %s." ), it->tname() );
-        it->convert( convert_to_off_item_id_string ).active = false;
+        it->convert( itype_id(convert_to_off_item_id_string) ).active = false;
     }
     return it->type->charges_to_use();
 }
@@ -10217,7 +10217,7 @@ int iuse::horde_beacon_off( player *p, item *it, bool , const tripoint & )
         p->add_msg_if_player( _( "%s is out of battery." ), it->tname() );
     } else {
         p->add_msg_if_player( _( "You turn on %s." ), it->tname() );
-        it->convert( convert_to_on_item_id_string ).active = true;
+        it->convert( itype_id(convert_to_on_item_id_string) ).active = true;
     }
     return it->type->charges_to_use();
 }

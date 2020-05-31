@@ -5330,7 +5330,9 @@ void activity_handlers::hentai_play_with_finish( player_activity *act, player *p
     if( !it.is_null() && it.has_property( "used_item" ) ) {
         item used = item( it.get_property_string( "used_item" ) );
         if( !used.is_null() ) {
-            used.fill_with( liquid );
+            // i dont know this error!
+            // used.fill_with( liquid );
+            g->m.add_item( p->pos(), liquid );
             p->i_add( used );
         }
         p->i_rem( &it );
@@ -5397,7 +5399,7 @@ void activity_handlers::custom_activity_finish( player_activity *act, player *p 
                act->custom_activity_data->result_item_id_str,
                calendar::turn,
                act->custom_activity_data->result_item_charges );
-        if( result_item.made_of( LIQUID ) ) {
+        if( result_item.made_of( phase_id::LIQUID ) ) {
             liquid_handler::handle_all_liquid( result_item, PICKUP_RANGE );
         } else if( act->custom_activity_data->is_result_item_drop_to_ground ) {
             put_into_vehicle_or_drop(*p, item_drop_reason::tumbling, { result_item });

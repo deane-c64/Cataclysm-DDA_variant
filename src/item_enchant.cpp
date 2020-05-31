@@ -268,9 +268,9 @@ static void effect_fire_gun( item_enchant& enchant, Creature& target,
     if( enchant.gun_fire_mode == gun_mode_id("") ){
         gun.gun_set_mode( enchant.gun_fire_mode );
     }
-    if( enchant.gun_ammo == "" && enchant.gun_ammo == "NULL" && enchant.gun_ammo == "null" ){
+    if( enchant.gun_ammo == itype_id("") && enchant.gun_ammo == itype_id("NULL") && enchant.gun_ammo == itype_id("null") ){
         gun.ammo_set( enchant.gun_ammo, 101 );
-    } else if ( gun.ammo_default() != "" && gun.ammo_default() != "NULL" && gun.ammo_default() != "null" ) {
+    } else if ( gun.ammo_default() != itype_id("") && gun.ammo_default() != itype_id("NULL") && gun.ammo_default() != itype_id("null") ) {
         gun.ammo_set( gun.ammo_default(), 101 );
     }
 

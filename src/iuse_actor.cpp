@@ -889,8 +889,9 @@ void place_monster_iuse::load( const JsonObject &obj )
     obj.read( "moves", moves );
     obj.read( "place_randomly", place_randomly );
     obj.read( "is_pet", is_pet );
-    skill1 = skill_id( obj.get_string( "skill1", skill1.str() ) );
-    skill2 = skill_id( obj.get_string( "skill2", skill2.str() ) );
+
+    //skill1 = skill_id( obj.get_string( "skill1", skill1.str() ) );
+    //skill2 = skill_id( obj.get_string( "skill2", skill2.str() ) );
 
     if( obj.has_array( "skills" ) ) {
         JsonArray skills_ja = obj.get_array( "skills" );

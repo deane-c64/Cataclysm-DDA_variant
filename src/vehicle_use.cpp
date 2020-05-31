@@ -1901,13 +1901,13 @@ void vehicle::use_shower( int p , const std::string &mode ) {
         consume_battery = 5000;
     }
 
-    if( fuel_left( "water_clean" ) < consume_water ) {
+    if( fuel_left( itype_id("water_clean") ) < consume_water ) {
         int litter = consume_water / 4;
         add_msg( m_bad, _( "You need %d charges (%d litter) of clean water for take a shower." ),
                 consume_water, litter);
         return;
     }
-    if( fuel_left( "battery", true ) < consume_battery ) {
+    if( fuel_left( itype_id("battery"), true ) < consume_battery ) {
         add_msg( m_bad, _( "You need %d charges of battery for take a shower." ),
                 consume_battery);
         return;
@@ -1938,7 +1938,7 @@ void vehicle::use_shower( int p , const std::string &mode ) {
     }
     if( query_yn( _( "%s This takes %s clean water and %s battery charge."),
             message, consume_water, consume_battery) ) {
-        drain( "water_clean", consume_water );
+        drain( itype_id("water_clean"), consume_water );
         discharge_battery( consume_battery );
         g->u.assign_activity(player_activity(activity_id( "ACT_TAKE_SHOWER" ),
                 time_to_take , -1, 0, "taking shower" ));
@@ -1956,7 +1956,7 @@ void vehicle::use_toilet( int p ) {
     if( items.empty() ) {
         add_msg( m_bad,
                  _( "Toilet is empty." ) );
-    } else if( fuel_left( "water" ) < 12 && fuel_left( "water_clean" ) < 12 ) {
+    } else if( fuel_left( itype_id("water") ) < 12 && fuel_left( itype_id("water_clean") ) < 12 ) {
         add_msg( m_bad, _( "You need 12 charges of water for flush toilet." ),
                  name );
     } else if( non_excretive ) {
@@ -1964,10 +1964,10 @@ void vehicle::use_toilet( int p ) {
                  _( "There are non excretive item on toilet." ) );
     } else {
 
-        if( fuel_left( "water" ) >= 12 ) {
-            drain( "water", 12 );
+        if( fuel_left( itype_id("water") ) >= 12 ) {
+            drain( itype_id("water"), 12 );
         } else {
-            drain( "water_clean", 12 );
+            drain( itype_id("water_clean"), 12 );
         }
 
         items.clear();
@@ -1977,24 +1977,24 @@ void vehicle::use_toilet( int p ) {
 }
 
 bool vehicle::is_available_washlet_resource( ){
-    bool water = (4 <= fuel_left( "water" ) || 4 <= fuel_left( "water_clean" ));
-    bool battery = (500 <= fuel_left( "battery", true ));
+    bool water = (4 <= fuel_left( itype_id("water") ) || 4 <= fuel_left( itype_id("water_clean") ));
+    bool battery = (500 <= fuel_left( itype_id("battery"), true ));
     return water && battery;
 }
 void vehicle::consume_washlet_resource( ){
-    if( 4 <= fuel_left( "water_clean" ) ) {
-        drain( "water_clean", 4 );
+    if( 4 <= fuel_left( itype_id("water_clean") ) ) {
+        drain( itype_id("water_clean"), 4 );
     } else {
-        drain( "water", 4 );
+        drain( itype_id("water"), 4 );
     }
-    drain( "battery", 500 );
+    drain( itype_id("battery"), 500 );
 }
 
 void vehicle::ftl_drive( int ) {
 
     if ( 100 <= ftl_charge_percentage ){
         // fuel check
-        bool ftl_fuel_is_not_enough = !g->u.crafting_inventory().has_charges( "plut_cell", 1 );
+        bool ftl_fuel_is_not_enough = !g->u.crafting_inventory().has_charges( itype_id("plut_cell"), 1 );
         if( ftl_fuel_is_not_enough ) {
             add_msg( m_bad, _("You have not plutnium cell, you need one plutnium cell to FTL drive.") );
             return;
@@ -2015,7 +2015,7 @@ void vehicle::ftl_drive( int ) {
         }
         // fuel consume
         std::vector<item_comp> ftl_fuel;
-        ftl_fuel.push_back( item_comp( "plut_cell", 1 ) );
+        ftl_fuel.push_back( item_comp( itype_id("plut_cell"), 1 ) );
         g->u.consume_items( ftl_fuel, 1, is_crafting_component );
 
         ftl_charge_percentage = 0;
@@ -2034,7 +2034,7 @@ void vehicle::ftl_drive( int ) {
             return;
         }
         // if dont have fuel, show warning
-        bool ftl_fuel_is_not_enough = !g->u.crafting_inventory().has_charges( "plut_cell", 1 );
+        bool ftl_fuel_is_not_enough = !g->u.crafting_inventory().has_charges( itype_id("plut_cell"), 1 );
         if( ftl_fuel_is_not_enough ) {
             // long message, my bad habit :(
             add_msg( m_warning, _( "You are not having plutnium cell. you need one plutnium cell for FTL drive, and you must stay on seat during FTL charging. recommend to bring your plutonium cell before start FTL charging." ) );

@@ -589,7 +589,7 @@ void gun_actor::shoot( monster &z, Creature &target, const gun_mode_id &mode ) c
 
 static bool can_wife( const monster &z, const player *target )
 {
-    if( target->wearing_something_on( bp_leg_l ) || target->wearing_something_on( bp_leg_r ) ) {
+    if( target->wearing_something_on( convert_bp( bp_leg_l ).id() ) || target->wearing_something_on( convert_bp( bp_leg_r ).id() ) ) {
         target->add_msg_player_or_npc( m_warning,
                                        _( "The %s is after your crotch!" ),
                                        _( "The %s is after <npcname>'s crotch!" ),
@@ -665,7 +665,7 @@ bool wife_u_actor::call( monster &z ) const
     if( !str_next_wife_u.empty() ) {
         if( time_point( std::stoi( str_next_wife_u ) ) > calendar::turn ){
             return false;
-        }        
+        }
     }
 
     if( get_dominating(z) == target ) {
@@ -719,9 +719,9 @@ bool wife_u_actor::call( monster &z ) const
             target->mutate_category( mutate_category );
         }
 
-		z.anger -= 50;
-		z.friendly += 50;
-		z.morale -= 30;
+        z.anger -= 50;
+        z.friendly += 50;
+        z.morale -= 30;
         z.set_value( "dominating", "" );
         z.set_value( "next_wife_u", std::to_string( to_turn<int>( calendar::turn + 1_turns * interval ) ) );
     }
