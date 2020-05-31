@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "clone_ptr.h"
+#include "type_id.h"
 #include "units.h"
 
 class Character;
@@ -17,12 +18,10 @@ class monster;
 class player;
 struct iteminfo;
 template<typename T> class ret_val;
-
-using itype_id = std::string;
 struct tripoint;
 
 // iuse methods returning a bool indicating whether to consume a charge of the item being used.
-class iuse
+namespace iuse
 {
     public:
         // FOOD AND DRUGS (ADMINISTRATION)
@@ -246,7 +245,7 @@ class iuse
         static int handle_ground_graffiti( player &p, item *it, const std::string &prefix,
                                            const tripoint &where );
 
-};
+} // namespace iuse
 
 void remove_radio_mod( item &it, player &p );
 
@@ -258,7 +257,7 @@ struct washing_requirements {
 };
 washing_requirements washing_requirements_for_volume( const units::volume & );
 
-using use_function_pointer = int ( iuse::* )( player *, item *, bool, const tripoint & );
+using use_function_pointer = int ( * )( player *, item *, bool, const tripoint & );
 
 class iuse_actor
 {

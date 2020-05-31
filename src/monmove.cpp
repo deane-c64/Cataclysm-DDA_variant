@@ -63,15 +63,17 @@ static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_pet_stay_here( "pet_stay_here" );
 
 
-static const species_id FUNGUS( "FUNGUS" );
-static const species_id INSECT( "INSECT" );
-static const species_id SPIDER( "SPIDER" );
-static const species_id ZOMBIE( "ZOMBIE" );
+static const itype_id itype_pressurized_tank( "pressurized_tank" );
+
+static const species_id species_FUNGUS( "FUNGUS" );
+static const species_id species_INSECT( "INSECT" );
+static const species_id species_SPIDER( "SPIDER" );
+static const species_id species_ZOMBIE( "ZOMBIE" );
 
 static const std::string flag_AUTODOC_COUCH( "AUTODOC_COUCH" );
 static const std::string flag_LIQUID( "LIQUID" );
 
-#define MONSTER_FOLLOW_DIST 8
+static constexpr int MONSTER_FOLLOW_DIST = 8;
 
 bool monster::wander()
 {
@@ -81,13 +83,13 @@ bool monster::wander()
 bool monster::is_immune_field( const field_type_id &fid ) const
 {
     if( fid == fd_fungal_haze ) {
-        return has_flag( MF_NO_BREATHE ) || type->in_species( FUNGUS );
+        return has_flag( MF_NO_BREATHE ) || type->in_species( species_FUNGUS );
     }
     if( fid == fd_fungicidal_gas ) {
-        return !type->in_species( FUNGUS );
+        return !type->in_species( species_FUNGUS );
     }
     if( fid == fd_insecticidal_gas ) {
-        return !type->in_species( INSECT ) && !type->in_species( SPIDER );
+        return !type->in_species( species_INSECT ) && !type->in_species( species_SPIDER );
     }
     const field_type &ft = fid.obj();
     if( ft.has_fume ) {
@@ -202,12 +204,12 @@ bool monster::will_move_to( const tripoint &p ) const
 
         // Higher awareness is needed for identifying these as threats.
         if( avoid_complex ) {
-            const trap &target_trap = g->m.tr_at( p );
             // Don't enter any dangerous fields
             if( is_dangerous_fields( target_field ) ) {
                 return false;
             }
             // Don't step on any traps (if we can see)
+            const trap &target_trap = g->m.tr_at( p );
             if( has_flag( MF_SEES ) && !target_trap.is_benign() && g->m.has_floor( p ) ) {
                 return false;
             }
@@ -283,7 +285,7 @@ float monster::rate_target( Creature &c, float best, bool smart ) const
     }
 
     if( !smart ) {
-        return int( d );
+        return static_cast<int>( d );
     }
 
     float power = c.power_rating();
@@ -294,7 +296,7 @@ float monster::rate_target( Creature &c, float best, bool smart ) const
     }
 
     if( power > 0 ) {
-        return int( d ) / power;
+        return static_cast<int>( d ) / power;
     }
 
     return FLT_MAX;
@@ -502,19 +504,16 @@ void monster::plan()
 
     // Operating monster keep you safe while they operate, how nice....
     if( type->has_special_attack( "OPERATE" ) ) {
-        int prev_friendlyness = friendly;
         if( has_effect( effect_operating ) ) {
             friendly = 100;
             for( auto critter : g->m.get_creatures_in_radius( pos(), 6 ) ) {
                 monster *mon = dynamic_cast<monster *>( critter );
-                if( mon != nullptr && mon->type->in_species( ZOMBIE ) ) {
+                if( mon != nullptr && mon->type->in_species( species_ZOMBIE ) ) {
                     anger = 100;
                 } else {
                     anger = 0;
                 }
             }
-        } else {
-            friendly = prev_friendlyness;
         }
     }
 
@@ -670,6 +669,15 @@ void monster::move()
             }
         }
         g->m.i_clear( pos() );
+    } else if( action == "eat_crop" ) {
+        // TODO: Create a special attacks whitelist unordered map instead of an if chain.
+        std::map<std::string, mtype_special_attack>::const_iterator attack =
+            type->special_attacks.find( action );
+        if( attack != type->special_attacks.end() && attack->second->call( *this ) ) {
+            if( special_attacks.count( action ) != 0 ) {
+                reset_special( action );
+            }
+        }
     }
     // record position before moving to put the player there if we're dragging
     tripoint drag_to = g->m.getabs( pos() );
@@ -912,8 +920,11 @@ void monster::move()
                     moved = true;
                     next_step = candidate_abs;
                     break;
-                } else if( att == A_FRIENDLY && ( target->is_player() || target->is_npc() ) ) {
-                    continue; // Friendly firing the player or an NPC is illegal for gameplay reasons
+                } else if( att == A_FRIENDLY && ( target->is_player() || target->is_npc() ||
+                                                  target->has_flag( MF_QUEEN ) ) ) {
+                    // Friendly firing the player or an NPC is illegal for gameplay reasons.
+                    // Monsters should instinctively avoid attacking queens that regenerate their own population.
+                    continue;
                 } else if( !has_flag( MF_ATTACKMON ) && !has_flag( MF_PUSH_MON ) ) {
                     // Bail out if there's a non-hostile monster in the way and we're not pushy.
                     continue;
@@ -960,8 +971,8 @@ void monster::move()
     const bool can_open_doors = has_flag( MF_CAN_OPEN_DOORS );
     // Finished logic section.  By this point, we should have chosen a square to
     //  move to (moved = true).
-    const tripoint local_next_step = g->m.getlocal( next_step );
     if( moved ) { // Actual effects of moving to the square we've chosen
+        const tripoint local_next_step = g->m.getlocal( next_step );
         const bool did_something =
             ( !pacified && attack_at( local_next_step ) ) ||
             ( !pacified && can_open_doors && g->m.open_door( local_next_step, !g->m.is_outside( pos() ) ) ) ||
@@ -1632,9 +1643,9 @@ bool monster::move_to( const tripoint &p, bool force, bool step_on_critter,
     if( has_flag( MF_DRIPS_NAPALM ) ) {
         if( one_in( 10 ) ) {
             // if it has more napalm, drop some and reduce ammo in tank
-            if( ammo["pressurized_tank"] > 0 ) {
+            if( ammo[itype_pressurized_tank] > 0 ) {
                 g->m.add_item_or_charges( pos(), item( "napalm", calendar::turn, 50 ) );
-                ammo["pressurized_tank"] -= 50;
+                ammo[itype_pressurized_tank] -= 50;
             } else {
                 // TODO: remove MF_DRIPS_NAPALM flag since no more napalm in tank
                 // Not possible for now since flag check is done on type, not individual monster
@@ -1907,7 +1918,7 @@ void monster::knock_back_to( const tripoint &to )
 bool monster::will_reach( const point &p )
 {
     monster_attitude att = attitude( &g->u );
-    if( att != MATT_FOLLOW && att != MATT_ATTACK && att != MATT_FRIEND && att != MATT_ZLAVE ) {
+    if( att != MATT_FOLLOW && att != MATT_ATTACK && att != MATT_FRIEND ) {
         return false;
     }
 
