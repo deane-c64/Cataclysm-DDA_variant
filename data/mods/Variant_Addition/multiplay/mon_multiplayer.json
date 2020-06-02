@@ -23,9 +23,8 @@
     "vision_night": 3,
     "regenerates": 1,
     "death_function": [ "NORMAL" ],
-    
     "special_attacks": [
-     {
+      {
         "type": "gun",
         "cooldown": 20,
         "move_cost": 300,
@@ -37,14 +36,6 @@
         "no_ammo_sound": "v29が弾切れだ！"
       }
     ],
-    
-    "flags": [
-      "SEES",
-      "HEARS",
-      "WARM",
-      "BASHES",
-      "BLEED",
-      "CAN_OPEN_DOORS"
-    ]
+    "flags": [ "SEES", "HEARS", "WARM", "BASHES", "BLEED", "CAN_OPEN_DOORS" ]
   }
 ]

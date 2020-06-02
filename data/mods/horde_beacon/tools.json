@@ -108,7 +108,6 @@
     "use_action": "HORDE_BEACON_ON",
     "magazine_well": 4
   },
-  
   {
     "id": "horde_beacon_highpower_off",
     "type": "TOOL",
@@ -137,12 +136,15 @@
     "description": "電源の入ったホードビーコンです。ゾンビを呼び出し続けます。",
     "power_draw": 100000,
     "flags": [ "ALLOWS_REMOTE_USE" ],
-    "properties": [ [ "item_id_to_turn_off", "horde_beacon_highpower_off" ], [ "monster_group", "GROUP_VANILLA" ], [ "turn_per_summon", "1" ] ],
+    "properties": [
+      [ "item_id_to_turn_off", "horde_beacon_highpower_off" ],
+      [ "monster_group", "GROUP_VANILLA" ],
+      [ "turn_per_summon", "1" ]
+    ],
     "revert_to": "horde_beacon_highpower_off",
     "use_action": "HORDE_BEACON_ON",
     "magazine_well": 4
   },
-
   {
     "id": "horde_beacon_elemental_off",
     "type": "TOOL",
@@ -171,12 +173,15 @@
     "description": "電源の入ったホードビーコンです。ゾンビを呼び出し続けます。",
     "power_draw": 100000,
     "flags": [ "ALLOWS_REMOTE_USE" ],
-    "properties": [ [ "item_id_to_turn_off", "horde_beacon_elemental_off" ], [ "monster_group", "GROUP_ELEMENTAL_ORIGINAL" ], [ "turn_per_summon", "30" ] ],
+    "properties": [
+      [ "item_id_to_turn_off", "horde_beacon_elemental_off" ],
+      [ "monster_group", "GROUP_ELEMENTAL_ORIGINAL" ],
+      [ "turn_per_summon", "30" ]
+    ],
     "revert_to": "horde_beacon_elemental_off",
     "use_action": "HORDE_BEACON_ON",
     "magazine_well": 4
   },
-
   {
     "id": "horde_beacon_north_off",
     "type": "TOOL",
@@ -205,10 +210,14 @@
     "description": "電源の入ったホードビーコンです。ゾンビを呼び出し続けます。",
     "power_draw": 100000,
     "flags": [ "ALLOWS_REMOTE_USE" ],
-    "properties": [ [ "item_id_to_turn_off", "horde_beacon_north_off" ], [ "monster_group", "GROUP_VANILLA" ], [ "turn_per_summon", "30" ], ["direction_horde_from", "north"] ],
+    "properties": [
+      [ "item_id_to_turn_off", "horde_beacon_north_off" ],
+      [ "monster_group", "GROUP_VANILLA" ],
+      [ "turn_per_summon", "30" ],
+      [ "direction_horde_from", "north" ]
+    ],
     "revert_to": "horde_beacon_north_off",
     "use_action": "HORDE_BEACON_ON",
     "magazine_well": 4
   }
-
 ]

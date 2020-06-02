@@ -10,13 +10,8 @@
     "autolearn": true,
     "using": [ [ "soldering_standard", 5 ] ],
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [ 
-      [ [ "pheromone", 1 ] ],
-      [ [ "noise_emitter", 1 ] ],
-      [ [ "scrap", 3 ] ]
-    ]
+    "components": [ [ [ "pheromone", 1 ] ], [ [ "noise_emitter", 1 ] ], [ [ "scrap", 3 ] ] ]
   },
-
   {
     "result": "horde_beacon_itemdrop_off",
     "type": "recipe",
@@ -28,13 +23,8 @@
     "autolearn": true,
     "using": [ [ "soldering_standard", 5 ] ],
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [ 
-      [ [ "pheromone", 99 ] ],
-      [ [ "noise_emitter", 1 ] ],
-      [ [ "scrap", 3 ] ]
-    ]
+    "components": [ [ [ "pheromone", 99 ] ], [ [ "noise_emitter", 1 ] ], [ [ "scrap", 3 ] ] ]
   },
-
   {
     "result": "horde_beacon_highpower_off",
     "type": "recipe",
@@ -46,13 +36,8 @@
     "autolearn": true,
     "using": [ [ "soldering_standard", 5 ] ],
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [ 
-      [ [ "pheromone", 3 ] ],
-      [ [ "noise_emitter", 3 ] ],
-      [ [ "scrap", 3 ] ]
-    ]
+    "components": [ [ [ "pheromone", 3 ] ], [ [ "noise_emitter", 3 ] ], [ [ "scrap", 3 ] ] ]
   },
-
   {
     "result": "horde_beacon_corpsedrop_off",
     "type": "recipe",
@@ -64,13 +49,8 @@
     "autolearn": true,
     "using": [ [ "soldering_standard", 5 ] ],
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [ 
-      [ [ "pheromone", 3 ] ],
-      [ [ "noise_emitter", 1 ] ],
-      [ [ "scrap", 3 ] ]
-    ]
+    "components": [ [ [ "pheromone", 3 ] ], [ [ "noise_emitter", 1 ] ], [ [ "scrap", 3 ] ] ]
   },
-  
   {
     "result": "horde_beacon_elemental_off",
     "type": "recipe",
@@ -82,13 +62,8 @@
     "autolearn": true,
     "using": [ [ "soldering_standard", 5 ] ],
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [ 
-      [ [ "pheromone", 3 ] ],
-      [ [ "noise_emitter", 1 ] ],
-      [ [ "scrap", 3 ] ]
-    ]
+    "components": [ [ [ "pheromone", 3 ] ], [ [ "noise_emitter", 1 ] ], [ [ "scrap", 3 ] ] ]
   },
-  
   {
     "result": "horde_beacon_north_off",
     "type": "recipe",
@@ -100,11 +75,6 @@
     "autolearn": true,
     "using": [ [ "soldering_standard", 5 ] ],
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [ 
-      [ [ "pheromone", 1 ] ],
-      [ [ "directional_antenna", 1 ] ],
-      [ [ "noise_emitter", 1 ] ],
-      [ [ "scrap", 3 ] ]
-    ]
+    "components": [ [ [ "pheromone", 1 ] ], [ [ "directional_antenna", 1 ] ], [ [ "noise_emitter", 1 ] ], [ [ "scrap", 3 ] ] ]
   }
 ]
