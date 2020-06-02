@@ -1,5 +1,4 @@
 [
-
   {
     "type": "EXTERNAL_OPTION",
     "name": "ENCHANT_WEIGHT_EFFECT_SELF",
@@ -51,5 +50,4 @@
     "stype": "int",
     "value": 100
   }
-
 ]

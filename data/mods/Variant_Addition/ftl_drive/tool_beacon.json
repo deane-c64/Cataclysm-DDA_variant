@@ -12,7 +12,6 @@
     "color": "white",
     "use_action": "PLACE_BEACON"
   },
-
   {
     "result": "ftl_beacon_place_item",
     "type": "recipe",
@@ -25,17 +24,11 @@
     "autolearn": true,
     "using": [ [ "soldering_standard", 10 ] ],
     "qualities": [ { "id": "SCREW", "level": 1 } ],
-    "components": [ 
-      [ [ "plut_cell", 3 ] ],
-      [ [ "radio_repeater_mod", 1 ] ],
-      [ [ "scrap", 10 ] ]
-    ]
+    "components": [ [ [ "plut_cell", 3 ] ], [ [ "radio_repeater_mod", 1 ] ], [ [ "scrap", 10 ] ] ]
   },
-
   {
     "type": "item_action",
     "id": "PLACE_BEACON",
     "name": { "str": "place FTL beacon" }
   }
-
 ]

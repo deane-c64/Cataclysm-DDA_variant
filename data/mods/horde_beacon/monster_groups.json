@@ -1,5 +1,4 @@
 [
-
   {
     "type": "monstergroup",
     "name": "GROUP_ELEMENTAL_ORIGINAL",
@@ -17,5 +16,4 @@
       { "monster": "mon_gas_zombie", "freq": 20, "cost_multiplier": 1 }
     ]
   }
-
 ]
