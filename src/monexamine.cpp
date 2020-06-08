@@ -102,6 +102,13 @@ const efftype_id effect_cubi_ban_love_flame( "cubi_ban_love_flame" );
 
 static const efftype_id effect_pet_stay_here( "pet_stay_here" );
 
+static const efftype_id effect_pet_allow_distance_1( "pet_allow_distance_1" );
+static const efftype_id effect_pet_allow_distance_2( "pet_allow_distance_2" );
+static const efftype_id effect_pet_allow_distance_3( "pet_allow_distance_3" );
+static const efftype_id effect_pet_allow_distance_5( "pet_allow_distance_5" );
+static const efftype_id effect_pet_allow_distance_7( "pet_allow_distance_7" );
+static const efftype_id effect_pet_allow_distance_10( "pet_allow_distance_10" );
+static const efftype_id effect_pet_allow_distance_15( "pet_allow_distance_15" );
 
 // littlemaid auto move things
 const efftype_id effect_littlemaid_goodnight( "littlemaid_goodnight" );
@@ -156,6 +163,7 @@ bool monexamine::pet_menu( monster &z )
         pet_stay_here,
         pet_healing,
         revert_to_item,
+        pet_allow_distance,
     };
 
     uilist amenu;
@@ -287,6 +295,24 @@ bool monexamine::pet_menu( monster &z )
 //    } else {
 //        amenu.addentry( pet_stay_here, true, 'f', _( "Stay here" ));
 //    }
+
+    if( z.has_effect( effect_pet_allow_distance_1 ) ){
+        amenu.addentry( pet_allow_distance, true, 'D', _( "Distance from master up to: %d" ), 1);
+    } else if( z.has_effect( effect_pet_allow_distance_2 ) ){
+        amenu.addentry( pet_allow_distance, true, 'D', _( "Distance from master up to: %d" ), 2);
+    } else if( z.has_effect( effect_pet_allow_distance_3 ) ){
+        amenu.addentry( pet_allow_distance, true, 'D', _( "Distance from master up to: %d" ), 3);
+    } else if( z.has_effect( effect_pet_allow_distance_5 ) ){
+        amenu.addentry( pet_allow_distance, true, 'D', _( "Distance from master up to: %d" ), 5);
+    } else if( z.has_effect( effect_pet_allow_distance_7 ) ){
+        amenu.addentry( pet_allow_distance, true, 'D', _( "Distance from master up to: %d" ), 7);
+    } else if( z.has_effect( effect_pet_allow_distance_10 ) ){
+        amenu.addentry( pet_allow_distance, true, 'D', _( "Distance from master up to: %d" ), 10);
+    } else if( z.has_effect( effect_pet_allow_distance_15 ) ){
+        amenu.addentry( pet_allow_distance, true, 'D', _( "Distance from master up to: %d" ), 15);
+    } else {
+        amenu.addentry( pet_allow_distance, true, 'D', _( "Distance from master up to: no limit" ));
+    }
 
     amenu.addentry( pet_healing, true, 'h', _( "Heal pet" ));
 
@@ -509,6 +535,9 @@ bool monexamine::pet_menu( monster &z )
             break;
         case revert_to_item:
             g->disable_robot( z.pos() );
+            break;
+        case pet_allow_distance:
+            change_pet_allow_distance( z );
             break;
 
         default:
@@ -1377,5 +1406,102 @@ void monexamine::heal_pet( monster &z )
         z.heal(5, false);
         g->u.mod_moves( -999 );
     }
+}
+
+static void remove_all_allow_distance_effect( monster &z ) {
+    z.remove_effect(effect_pet_allow_distance_1);
+    z.remove_effect(effect_pet_allow_distance_2);
+    z.remove_effect(effect_pet_allow_distance_3);
+    z.remove_effect(effect_pet_allow_distance_5);
+    z.remove_effect(effect_pet_allow_distance_7);
+    z.remove_effect(effect_pet_allow_distance_10);
+    z.remove_effect(effect_pet_allow_distance_15);
+}
+void monexamine::change_pet_allow_distance( monster &z )
+{
+
+    enum choices {
+        distance_no_limit = 0,
+        distance_1,
+        distance_2,
+        distance_3,
+        distance_5,
+        distance_7,
+        distance_10,
+        distance_15
+    };
+
+    uilist amenu;
+    std::string pet_name = z.get_name();
+    amenu.text = string_format( _( "How much allow distance from master to %s?" ), pet_name );
+
+    amenu.addentry( distance_no_limit, true, '0', _( "no limit" ) );
+    amenu.addentry( distance_1, true, '1', _( "1" ) );
+    amenu.addentry( distance_2, true, '2', _( "2" ) );
+    amenu.addentry( distance_3, true, '3', _( "3" ) );
+    amenu.addentry( distance_5, true, '5', _( "5" ) );
+    amenu.addentry( distance_7, true, '7', _( "7" ) );
+    amenu.addentry( distance_10, true, 't', _( "10" ) );
+    amenu.addentry( distance_15, true, 'f', _( "15" ) );
+    amenu.query();
+
+    int choice = amenu.ret;
+    switch( choice ) {
+    case distance_no_limit:
+        remove_all_allow_distance_effect( z );
+        break;
+    case distance_1:
+        remove_all_allow_distance_effect( z );
+        z.add_effect( effect_pet_allow_distance_1, 1_turns, num_bp, true );
+        if( z.type->vision_day <= 1 ){
+            popup(_("Your pet seems has not enough vision range, maybe this order does not work."));
+        }
+        break;
+    case distance_2:
+        remove_all_allow_distance_effect( z );
+        z.add_effect( effect_pet_allow_distance_2, 1_turns, num_bp, true );
+        if( z.type->vision_day <= 2 ){
+            popup(_("Your pet seems has not enough vision range, maybe this order does not work."));
+        }
+        break;
+    case distance_3:
+        remove_all_allow_distance_effect( z );
+        z.add_effect( effect_pet_allow_distance_3, 1_turns, num_bp, true );
+        if( z.type->vision_day <= 3 ){
+            popup(_("Your pet seems has not enough vision range, maybe this order does not work."));
+        }
+        break;
+    case distance_5:
+        remove_all_allow_distance_effect( z );
+        z.add_effect( effect_pet_allow_distance_5, 1_turns, num_bp, true );
+        if( z.type->vision_day <= 5 ){
+            popup(_("Your pet seems has not enough vision range, maybe this order does not work."));
+        }
+        break;
+    case distance_7:
+        remove_all_allow_distance_effect( z );
+        z.add_effect( effect_pet_allow_distance_7, 1_turns, num_bp, true );
+        if( z.type->vision_day <= 7 ){
+            popup(_("Your pet seems has not enough vision range, maybe this order does not work."));
+        }
+        break;
+    case distance_10:
+        remove_all_allow_distance_effect( z );
+        if( z.type->vision_day <= 10 ){
+            popup(_("Your pet seems has not enough vision range, maybe this order does not work."));
+        }
+        z.add_effect( effect_pet_allow_distance_10, 1_turns, num_bp, true );
+        break;
+    case distance_15:
+        remove_all_allow_distance_effect( z );
+        if( z.type->vision_day <= 15 ){
+            popup(_("Your pet seems has not enough vision range, maybe this order does not work."));
+        }
+        z.add_effect( effect_pet_allow_distance_15, 1_turns, num_bp, true );
+        break;
+    default:
+        return;
+    }
+
 }
 

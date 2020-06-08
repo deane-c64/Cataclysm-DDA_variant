@@ -4,5 +4,49 @@
     "id": "pet_stay_here",
     "name": [ "pet_stay_here" ],
     "desc": [ "AI tag used for tied up critters.  This is a bug if you have it." ]
+  },
+  
+  {
+    "type": "effect_type",
+    "id": "pet_allow_distance_1",
+    "name": [ "pet_allow_distance_1" ],
+    "desc": [ "AI tag used for pet distance.  This is a bug if you have it." ]
+  },
+  {
+    "type": "effect_type",
+    "id": "pet_allow_distance_2",
+    "name": [ "pet_allow_distance_2" ],
+    "desc": [ "AI tag used for pet distance.  This is a bug if you have it." ]
+  },
+  {
+    "type": "effect_type",
+    "id": "pet_allow_distance_3",
+    "name": [ "pet_allow_distance_3" ],
+    "desc": [ "AI tag used for pet distance.  This is a bug if you have it." ]
+  },
+  {
+    "type": "effect_type",
+    "id": "pet_allow_distance_5",
+    "name": [ "pet_allow_distance_5" ],
+    "desc": [ "AI tag used for pet distance.  This is a bug if you have it." ]
+  },
+  {
+    "type": "effect_type",
+    "id": "pet_allow_distance_7",
+    "name": [ "pet_allow_distance_7" ],
+    "desc": [ "AI tag used for pet distance.  This is a bug if you have it." ]
+  },
+  {
+    "type": "effect_type",
+    "id": "pet_allow_distance_10",
+    "name": [ "pet_allow_distance_10" ],
+    "desc": [ "AI tag used for pet distance.  This is a bug if you have it." ]
+  },
+  {
+    "type": "effect_type",
+    "id": "pet_allow_distance_15",
+    "name": [ "pet_allow_distance_15" ],
+    "desc": [ "AI tag used for pet distance.  This is a bug if you have it." ]
   }
+  
 ]
