@@ -163,6 +163,7 @@ static const efftype_id effect_lust( "lust" );
 static const efftype_id effect_cubi_allow_seduce_friendlyfire( "cubi_allow_seduce_friendlyfire" );
 static const efftype_id effect_cubi_allow_seduce_player( "cubi_allow_seduce_player" );
 static const efftype_id effect_went_heaven( "went_heaven" );
+static const efftype_id effect_movingdoing( "movingdoing" );
 
 static const skill_id skill_gun( "gun" );
 static const skill_id skill_launcher( "launcher" );
@@ -4479,10 +4480,54 @@ bool mattack::longswipe( monster *z )
     return true;
 }
 
+static const SpeechBubble &get_speech_with_suffix( monster *parrot, const char* speech_id_suffix ){
+    std::string speech_id = parrot->type->id.str();
+    speech_id.append( "_" );
+    speech_id.append( speech_id_suffix );
+    return get_speech( speech_id );
+}
+
+static const SpeechBubble &get_parrot_variant_extend( monster *parrot ) {
+
+    if( parrot->has_effect( effect_movingdoing ) ) {
+        const SpeechBubble &speech = get_speech_with_suffix( parrot, "hentai_play_doing" );
+        if( 0 < speech.volume ) {
+            return speech;
+        }
+    }
+
+    Creature *target = parrot->attack_target();
+    if( target != nullptr ) {
+        const SpeechBubble &speech = get_speech_with_suffix( parrot, "fighting" );
+        if( 0 < speech.volume ) {
+            return speech;
+        }
+    }
+
+    if( one_in( 2 ) && std::none_of(g->u.worn.begin(), g->u.worn.end(), [](item it){
+            return it.covers( bp_leg_l ) || it.covers( bp_leg_r );}) ){
+        // player is not covering leg
+        const SpeechBubble &speech = get_speech_with_suffix( parrot, "player_is_naked" );
+        if( 0 < speech.volume ) {
+            return speech;
+        }
+    }
+    return get_speech( parrot->type->id.str() );
+}
+
 static void parrot_common( monster *parrot )
 {
     // It takes a while
     parrot->moves -= 100;
+
+    if( parrot->has_effect( effect_pet ) || parrot->friendly == -1) {
+        // if pet or friendly, extend parrot
+        const SpeechBubble &speech = get_parrot_variant_extend( parrot );
+        sounds::sound( parrot->pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
+                       false, "speech", parrot->type->id.str() );
+        return;
+    }
+
     const SpeechBubble &speech = get_speech( parrot->type->id.str() );
     sounds::sound( parrot->pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
                    false, "speech", parrot->type->id.str() );
@@ -5799,6 +5844,11 @@ bool mattack::littlemaid_action( monster *maid )
 
         if( maid->get_hp() < maid->get_hp_max() && target != nullptr && rl_dist( maid->pos(), target->pos() ) < 3 ) {
             speech_id = "mon_little_maid_R18_milk_sanpo_maid_in_attacked";
+        } else if( maid->has_effect( effect_movingdoing ) ) {
+            if( !one_in( 20 ) ){
+                 return true;
+             }
+            speech_id = "mon_shoggoth_maid_hentai_play_doing";
         } else if( !g->u.activity.is_null() && !one_in( 20 ) ){
             // reduce talk frequency at master is working
             return true;
@@ -6249,6 +6299,11 @@ bool mattack::shoggothmaid_action( monster *maid )
         } else {
             speech_id = "mon_shoggoth_maid_in_special";
         }
+    } else if( maid->has_effect( effect_movingdoing ) ) {
+        if( !one_in( 20 ) ){
+             return true;
+         }
+        speech_id = "mon_shoggoth_maid_hentai_play_doing";
     } else if( maid->has_effect( effect_shoggothmaid_in_hug ) ) {
         if( !one_in( 20 ) ){
              return true;

@@ -5489,6 +5489,7 @@ void activity_handlers::hentai_play_with_do_turn( player_activity *act, player *
             if( 1 <= act->monsters.size() ) {
                 shared_ptr_fast<monster> mon_partner = act->monsters[0].lock();
                 mon_partner->add_effect( effect_movingdoing, 10_minutes );
+                mon_partner->total_xp += rng(1, 5);
             }
         }
         p->add_morale( morale_type( act->str_values[1] ), bonus * bonus_multiplier, 0, 1_hours, 15_minutes );
@@ -5529,6 +5530,16 @@ void activity_handlers::hentai_play_with_finish( player_activity *act, player *p
         if( 1 <= act->monsters.size() ) {
             shared_ptr_fast<monster> mon_partner = act->monsters[0].lock();
             mon_partner->remove_effect( effect_movingdoing );
+
+            // hentai play finish speech
+            std::string speech_id = mon_partner->type->id.str();
+            speech_id.append( "_" );
+            speech_id.append( "hentai_play_finish" );
+            const SpeechBubble &speech = get_speech( speech_id );
+            if( 0 < speech.volume ){
+                sounds::sound( mon_partner->pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
+                               false, "speech", mon_partner->type->id.str() );
+            }
         }
     }
 

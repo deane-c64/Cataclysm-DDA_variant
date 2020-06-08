@@ -77,6 +77,7 @@
 #include "clothing_mod.h"
 #include "npc.h"
 #include "options.h"
+#include "speech.h"
 
 static const activity_id ACT_FIRSTAID( "ACT_FIRSTAID" );
 static const activity_id ACT_MAKE_ZLAVE( "ACT_MAKE_ZLAVE" );
@@ -108,6 +109,7 @@ static const efftype_id effect_pet( "pet" );
 
 // for hentai
 static const efftype_id effect_movingdoing( "movingdoing" );
+static const efftype_id effect_speed_drink( "speed_drink" );
 
 static const fault_id fault_bionic_salvaged( "fault_bionic_salvaged" );
 
@@ -5040,6 +5042,9 @@ int yiff_actor::use( player &p, item &it, bool, const tripoint & ) const
 
     // Assign activity.
     int cost = std::min( to_moves<int>( 10_minutes ) * p.str_cur, to_moves<int>( 3_hours ) );
+    if( p.has_effect( effect_speed_drink ) ) {
+        cost = (cost / 3);
+    }
     p.assign_activity( ACT_HENTAI_PLAY_WITH, cost, 0, device, "play_with_love" );
     p.activity.str_values.push_back( snippet );
     p.activity.str_values.push_back( morale );
@@ -5055,6 +5060,16 @@ int yiff_actor::use( player &p, item &it, bool, const tripoint & ) const
             monster &mon = *mon_;
             p.activity.monsters.emplace_back( g->shared_from( mon ) );
             mon.add_effect( effect_movingdoing, 10_minutes );
+
+            // hentai play start speech
+            std::string speech_id = mon.type->id.str();
+            speech_id.append( "_" );
+            speech_id.append( "hentai_play_start" );
+            const SpeechBubble &speech = get_speech( speech_id );
+            if( 0 < speech.volume ){
+                sounds::sound( mon.pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
+                               false, "speech", mon.type->id.str() );
+            }
         }
     }
     return 0;
