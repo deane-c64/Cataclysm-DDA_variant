@@ -1512,12 +1512,14 @@ void monster::melee_attack( Creature &target, float accuracy )
     target.check_dead_state();
 
     if( target.is_dead_state() ) {
-        const monster* target_as_monster = dynamic_cast<const monster *>( &target );
-        if( target_as_monster != nullptr) {
-            // weaker myself, stronger enemy, gain more xp
-            int diff_base = std::max(1, this->type->difficulty_base);
-            int gain_xp = std::max(1, ( target_as_monster->type->difficulty * 10 ) / diff_base );
-            total_xp += gain_xp;
+        if( get_option<bool>("MONSTER_XP_LEVELUP") ) {
+            const monster* target_as_monster = dynamic_cast<const monster *>( &target );
+            if( target_as_monster != nullptr) {
+                // weaker myself, stronger enemy, gain more xp
+                int diff_base = std::max(1, this->type->difficulty_base);
+                int gain_xp = std::max(1, ( target_as_monster->type->difficulty * 10 ) / diff_base );
+                total_xp += gain_xp;
+            }
         }
     }
 

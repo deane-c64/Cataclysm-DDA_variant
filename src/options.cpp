@@ -2175,6 +2175,13 @@ void options_manager::add_options_world_default()
 
     add_empty_line();
 
+    add( "MONSTER_XP_LEVELUP", "world_default", translate_marker( "Monster XP Levelup" ),
+         translate_marker( "If False, monsters cannot gain xp by killing other monster. Changing this is not affect already growed monster." ),
+         true
+       );
+
+    add_empty_line();
+
     add( "ACID_RAIN", "world_default", translate_marker( "Acid rain" ),
          translate_marker( "set acid rain frequency." ),
          0, 100, 20
