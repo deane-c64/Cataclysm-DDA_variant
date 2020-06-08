@@ -57,6 +57,13 @@ static const efftype_id effect_pushed( "pushed" );
 static const efftype_id effect_stunned( "stunned" );
 static const efftype_id effect_pet_stay_here( "pet_stay_here" );
 
+static const efftype_id effect_pet_allow_distance_1( "pet_allow_distance_1" );
+static const efftype_id effect_pet_allow_distance_2( "pet_allow_distance_2" );
+static const efftype_id effect_pet_allow_distance_3( "pet_allow_distance_3" );
+static const efftype_id effect_pet_allow_distance_5( "pet_allow_distance_5" );
+static const efftype_id effect_pet_allow_distance_7( "pet_allow_distance_7" );
+static const efftype_id effect_pet_allow_distance_10( "pet_allow_distance_10" );
+static const efftype_id effect_pet_allow_distance_15( "pet_allow_distance_15" );
 
 static const species_id FUNGUS( "FUNGUS" );
 static const species_id INSECT( "INSECT" );
@@ -517,6 +524,39 @@ void monster::plan()
             }
         } else {
             friendly = prev_friendlyness;
+        }
+    }
+
+    // if
+    if( friendly < 0 && target != nullptr && sees( g->u ) ) {
+        if( has_effect( effect_pet_allow_distance_1 ) ) {
+            if( 1 < rl_dist( pos(), g->u.pos() ) ) {
+                target = nullptr;
+            }
+        } else if ( has_effect( effect_pet_allow_distance_2 ) ) {
+            if( 2 < rl_dist( pos(), g->u.pos() ) ) {
+                target = nullptr;
+            }
+        } else if ( has_effect( effect_pet_allow_distance_3 ) ) {
+            if( 3 < rl_dist( pos(), g->u.pos() ) ) {
+                target = nullptr;
+            }
+        } else if ( has_effect( effect_pet_allow_distance_5 ) ) {
+            if( 5 < rl_dist( pos(), g->u.pos() ) ) {
+                target = nullptr;
+            }
+        } else if ( has_effect( effect_pet_allow_distance_7 ) ) {
+            if( 7 < rl_dist( pos(), g->u.pos() ) ) {
+                target = nullptr;
+            }
+        } else if ( has_effect( effect_pet_allow_distance_10 ) ) {
+            if( 10 < rl_dist( pos(), g->u.pos() ) ) {
+                target = nullptr;
+            }
+        } else if ( has_effect( effect_pet_allow_distance_15 ) ) {
+            if( 15 < rl_dist( pos(), g->u.pos() ) ) {
+                target = nullptr;
+            }
         }
     }
 
