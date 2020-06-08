@@ -6,7 +6,7 @@
 
 - パッチノートは、安定版ベースのダウンロードURL先に置いてあります
 
-## [0.E安定版ベース_r16](https://drive.google.com/drive/u/0/folders/12SujnAuBS1sQxM7hW3Yjn1RRAIYPQMQO)
+## [0.E安定版ベース_r17](https://drive.google.com/drive/u/0/folders/1YY4M0pGlr3yqLYSaMenC6CCH7cgQ6FZC)
 
 安定版ベースの最新版です、初めての方にオススメです。
 
