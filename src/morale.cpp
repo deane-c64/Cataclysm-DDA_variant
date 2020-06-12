@@ -9,6 +9,7 @@
 #include <set>
 #include <utility>
 
+#include "avatar.h"
 #include "bodypart.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -16,6 +17,7 @@
 #include "cursesdef.h"
 #include "debug.h"
 #include "enums.h"
+#include "game.h"
 #include "input.h"
 #include "int_id.h"
 #include "item.h"
@@ -762,7 +764,7 @@ void player_morale::display( int focus_eq, int pain_penalty, int fatigue_penalty
         draw_scrollbar( w, offset, rows_visible, rows_total,
                         point( 0, top_lines.size() ), c_white, true );
 
-        wrefresh( w );
+        wnoutrefresh( w );
     } );
 
     input_context ctxt( "MORALE" );
@@ -901,10 +903,9 @@ void player_morale::on_worn_item_washed( const item &it )
     const body_part_set covered( it.get_covered_body_parts() );
 
     if( covered.any() ) {
-        for( const body_part bp : all_body_parts ) {
-            if( covered.test( bp ) ) {
-                const bodypart_id bp_id = convert_bp( bp ).id();
-                update_body_part( body_parts[bp_id] );
+        for( const bodypart_id &bp : g->u.get_all_body_parts() ) {
+            if( covered.test( bp.id() ) ) {
+                update_body_part( body_parts[bp] );
             }
         }
     } else {
@@ -970,10 +971,9 @@ void player_morale::set_worn( const item &it, bool worn )
     const body_part_set covered( it.get_covered_body_parts() );
 
     if( covered.any() ) {
-        for( const body_part bp : all_body_parts ) {
-            if( covered.test( bp ) ) {
-                const bodypart_id bp_id = convert_bp( bp ).id();
-                update_body_part( body_parts[bp_id] );
+        for( const bodypart_id &bp : g->u.get_all_body_parts() ) {
+            if( covered.test( bp.id() ) ) {
+                update_body_part( body_parts[bp] );
             }
         }
     } else {
