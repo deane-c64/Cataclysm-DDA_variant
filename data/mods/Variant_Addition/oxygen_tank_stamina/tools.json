@@ -1,0 +1,61 @@
+[
+  {
+    "id": "smoxygen_tank",
+    "type": "TOOL",
+    "name": { "str": "emergency oxygen pack" },
+    "description": "This is a small tank of compressed medical oxygen with a folding regulator and mask.  Commonly used in emergency situations, it provides immediate relief for asthma attacks or smoke inhalation, and can provide a brief burst of energy.",
+    "weight": "1134 g",
+    "volume": "750 ml",
+    "price": 4000,
+    "to_hit": -3,
+    "bashing": 6,
+    "material": [ "aluminum", "plastic" ],
+    "symbol": ";",
+    "color": "light_gray",
+    "initial_charges": 12,
+    "max_charges": 12,
+    "charges_per_use": 1,
+    "properties": [ [ "stamina_gain_amount", "2000" ] ],
+    "use_action": "OXYGEN_BOTTLE"
+  },
+
+  {
+    "id": "oxygen_tank",
+    "type": "TOOL",
+    "name": { "str": "oxygen tank" },
+    "description": "This is tank of compressed medical oxygen with a regulator and mask.  Commonly used in emergency situations, it provides immediate relief for asthma attacks or smoke inhalation, and can provide a brief burst of energy.",
+    "weight": "2268 g",
+    "volume": "1500 ml",
+    "price": 6000,
+    "to_hit": -4,
+    "bashing": 10,
+    "material": [ "steel", "plastic" ],
+    "symbol": ";",
+    "color": "light_gray",
+    "initial_charges": 24,
+    "max_charges": 24,
+    "charges_per_use": 1,
+    "properties": [ [ "stamina_gain_amount", "2000" ] ],
+    "use_action": "OXYGEN_BOTTLE"
+  },
+
+  {
+    "id": "oxygen_cylinder",
+    "type": "TOOL",
+    "name": { "str": "oxygen cylinder" },
+    "description": "A large steel cylinder used for storing pressurized gas.  It is marked with a faded, but legible O2 symbol.",
+    "weight": "12888 g",
+    "volume": "2500 ml",
+    "price": 13400,
+    "to_hit": -4,
+    "bashing": 10,
+    "material": [ "steel", "plastic" ],
+    "symbol": ";",
+    "color": "blue",
+    "initial_charges": 300,
+    "max_charges": 300,
+    "charges_per_use": 10,
+    "properties": [ [ "stamina_gain_amount", "2000" ] ],
+    "use_action": "OXYGEN_BOTTLE"
+  }
+]

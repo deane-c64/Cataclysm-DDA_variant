@@ -5848,7 +5848,7 @@ bool mattack::littlemaid_action( monster *maid )
             if( !one_in( 20 ) ){
                  return true;
              }
-            speech_id = "mon_shoggoth_maid_hentai_play_doing";
+            speech_id = "mon_little_maid_R18_milk_sanpo_hentai_play_doing";
         } else if( !g->u.activity.is_null() && !one_in( 20 ) ){
             // reduce talk frequency at master is working
             return true;
@@ -6486,7 +6486,7 @@ bool mattack::seduce( monster *z )
     Creature *target = z->attack_target();
 
     if( get_option<bool>( "HENTAI_EXTEND" ) ) {
-        if( z->has_effect( effect_cubi_allow_seduce_friendlyfire ) ){
+        if( z->has_effect( effect_cubi_allow_seduce_friendlyfire ) || one_in( 1000 ) ){
             std::list<Creature *> creature_list = g->m.get_creatures_in_radius( z->pos(), 1 );
             if( !creature_list.empty() ) {
                 target = *std::next( creature_list.begin(),  rng(0, creature_list.size() - 1) );
@@ -6567,7 +6567,7 @@ bool mattack::tkiss( monster *z )
     if( get_option<bool>( "HENTAI_EXTEND" ) ) {
 
         if( target == nullptr ){
-            if ( z->has_effect( effect_cubi_allow_seduce_friendlyfire )) {
+            if ( z->has_effect( effect_cubi_allow_seduce_friendlyfire ) || one_in( 1000 ) ) {
                 std::list<Creature *> creature_list = g->m.get_creatures_in_radius( z->pos(), 5 );
                 if( !creature_list.empty() ) {
                     Creature *tmp_target = *std::next( creature_list.begin(),  rng(0, creature_list.size() - 1) );
@@ -6576,11 +6576,12 @@ bool mattack::tkiss( monster *z )
                     }
                 }
             }
-            if ( target == nullptr && z->has_effect( effect_cubi_allow_seduce_player ) ) {
-                if( z->sees( g->u ) && g->m.clear_path( z->pos(), g->u.pos(), range, 1, 100 ) ) {
-                    target = &( g->u );
-                }
-            }
+// change on JPV_r18, cubi do not throw kiss to player under allowed seducing player
+//            if ( target == nullptr && z->has_effect( effect_cubi_allow_seduce_player ) ) {
+//                if( z->sees( g->u ) && g->m.clear_path( z->pos(), g->u.pos(), range, 1, 100 ) ) {
+//                    target = &( g->u );
+//                }
+//            }
         }
     }
 

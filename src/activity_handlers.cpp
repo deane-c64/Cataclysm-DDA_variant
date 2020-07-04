@@ -248,6 +248,7 @@ const efftype_id effect_cooldown_of_custom_activity( "effect_cooldown_of_custom_
 // for hentai
 const efftype_id effect_movingdoing( "movingdoing" );
 const efftype_id effect_lust( "lust" );
+const efftype_id effect_creampie_ex( "creampie_ex" );
 
 static const zone_type_id zone_type_FARM_PLOT( "FARM_PLOT" );
 
@@ -5135,7 +5136,7 @@ static void littlemaid_ecstasy_check( player *p, shared_ptr_fast<monster> maid){
                            false, "speech", maid->type->id.str() );
         }
 
-        if( maid->has_flag( MF_SHOGGOTH_MAID ) && one_in( 5 ) ) {
+        if( maid->has_flag( MF_SHOGGOTH_MAID ) && one_in( 2 ) ) {
             // lay egg
             const SpeechBubble &speech = get_speech( "mon_shoggoth_maid_lay_egg" );
             sounds::sound( maid->pos(), speech.volume, sounds::sound_t::speech, speech.text.translated(),
@@ -5562,6 +5563,15 @@ void activity_handlers::hentai_play_with_finish( player_activity *act, player *p
         p->i_rem( &it );
     } else {
         g->m.add_item( p->pos(), liquid );
+
+        if( get_option<bool>("HENTAI_EXTEND") ) {
+            // player or partner be creampied randomly, not depend gender.
+            if( one_in( 2 ) && partner != nullptr) {
+                partner->add_effect( effect_creampie_ex, 10_minutes );
+            } else {
+                p->add_effect( effect_creampie_ex, 10_minutes );
+            }
+        }
     }
 
     act->set_to_null();

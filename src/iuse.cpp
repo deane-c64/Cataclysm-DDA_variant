@@ -976,7 +976,7 @@ int iuse::inhaler( player *p, item *it, bool, const tripoint & )
 
 int iuse::oxygen_bottle( player *p, item *it, bool, const tripoint & )
 {
-    p->moves -= to_moves<int>( 10_seconds );
+    p->moves -= to_moves<int>( 2_seconds );
     p->add_msg_player_or_npc( m_neutral, string_format( _( "You breathe deeply from the %s" ),
                               it->tname() ),
                               string_format( _( "<npcname> breathes from the %s" ),
@@ -992,6 +992,16 @@ int iuse::oxygen_bottle( player *p, item *it, bool, const tripoint & )
         p->mod_painkiller( 2 );
     }
     p->mod_painkiller( 2 );
+
+    if( it->has_property( "stamina_gain_amount" ) ) {
+        std::string stamina_gain_amount = it->get_property_string( "stamina_gain_amount" );
+        if ( stamina_gain_amount == "" ) {
+            debugmsg( "stamina_gain_amount is nothing! ja: Sanso tank No properties No stamina_gain_amount Ga Arimasen" );
+            return it->type->charges_to_use();
+        }
+        p->mod_stamina( std::stoi(stamina_gain_amount) );
+    }
+
     return it->type->charges_to_use();
 }
 
