@@ -6,9 +6,13 @@
 
 - パッチノートは、安定版ベースのダウンロードURL先に置いてあります
 
-## [0.E安定版ベース_r17](https://drive.google.com/drive/u/0/folders/1YY4M0pGlr3yqLYSaMenC6CCH7cgQ6FZC)
+## [0.E安定版ベース_r18](https://drive.google.com/drive/u/0/folders/1T_wNuilewMnzjhYxy1hkfhWsYRLSTSZ1)
 
 安定版ベースの最新版です、初めての方にオススメです。
+
+r18は第18版という意味であり18歳未満の方のプレイを禁止しているわけではありませんが、
+
+原作からある様々な暴力・犯罪的表現に加え、同梱Modには強めの性的なコンテンツを含みますので、ご心配であればご在住の地域の法律等をご確認してみてください。
 
 ## [#10713開発版ベース_r16](https://drive.google.com/drive/u/0/folders/1rz7lh-A3ox86JHyQw8r-jre0-zXPTlPJ)
 
