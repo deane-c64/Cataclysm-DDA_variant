@@ -14,6 +14,10 @@ r18は第18版という意味であり18歳未満の方のプレイを禁止し�
 
 原作からある様々な暴力・犯罪的表現に加え、同梱Modには強めの性的なコンテンツを含みますので、ご心配であればご在住の地域の法律等をご確認してみてください。
 
+Githubのリリースページにも同じファイルを置いてあります。
+
+https://github.com/roloa/Cataclysm-DDA_variant/releases/tag/Variant_JP_r18
+
 ## [#10713開発版ベース_r16](https://drive.google.com/drive/u/0/folders/1rz7lh-A3ox86JHyQw8r-jre0-zXPTlPJ)
 
 さらに新しい開発版ベースです。より新しい開発版が好きな方にオススメです。
@@ -27,6 +31,14 @@ r18は第18版という意味であり18歳未満の方のプレイを禁止し�
 現在のベースバージョンは#10611で、これは本家がインベントリ仕様変更でめちゃくちゃになる直前ぐらいのバージョンです。
 
 プレイの前に[無効になっている機能のissue](https://github.com/roloa/Cataclysm-DDA_variant/issues/50)をご確認をお願いします
+
+## [JP_Variant_r14 Based Experimental #10611 English translate version](https://github.com/roloa/Cataclysm-DDA_variant/releases/tag/Variant_JP_r14_en)
+
+English translate of JP_Variant Based Experimental version at the pre-nested container.
+
+It is recommended for English people.
+
+This version is created by contributor (I want to write his name and link his github page when get permission from him)
 
 ## [0.E安定版ベース_r16_32bit版](https://drive.google.com/drive/u/0/folders/1GQPUJAYoZP-vF024ksdSBHzptYKdqhje)
 
