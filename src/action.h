@@ -319,8 +319,6 @@ enum action_id : int {
     ACTION_DISPLAY_RADIATION,
     /** Edit sidebar memo */
     ACTION_SIDEBAR_MEMO,
-    /** Open multiplay menu. */
-    ACTION_MULTIPLAY_MENU,
     /** Not an action, serves as count of enumerated actions */
     NUM_ACTIONS
     /**@}*/
