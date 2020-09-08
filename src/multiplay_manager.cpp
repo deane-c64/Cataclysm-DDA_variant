@@ -126,10 +126,7 @@ void multiplay_manager::server_thread_process(){
                 break;
             }
         }
-        if( started ) {
-            add_msg("someone connected to multiplayer.");
-
-        } else {
+        if( !started ) {
             add_msg("someone connected, but connection pool is full.");
 
             std::string welcome_msg = "server connection pool is full, try again later.";
@@ -147,9 +144,9 @@ int multiplay_manager::do_turn(){
 
     for(const auto iter : command_map ){
         if( iter.second.c_type == client_command_message ) {
-            add_msg( m_debug, "client_name:%s, message:%s;", iter.second.client_name, iter.second.command_argument );
+            add_msg( iter.second.command_argument );
 
-            // erase_command(iter.first);
+            erase_command(iter.first);
         } else if( iter.second.c_type == client_command_spawn ) {
             // add_msg( iter.second.command_argument );
 
@@ -206,7 +203,8 @@ void multiplay_manager::insert_command(std::string key, client_command c_command
     std::lock_guard<std::mutex> lock(map_mtx);
     const auto iter = command_map.find( key );
     if( iter != command_map.end() ) {
-        command_map.erase(iter);
+        //command_map.erase(iter);
+        return;
     }
     command_map.emplace( key, c_command );
     return;
