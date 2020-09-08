@@ -578,7 +578,6 @@ class monster : public Creature
         tripoint stay_place;
     public:
         void set_stay_place_to_here();
-        std::string multiplay_client_name = "";
 };
 
 #endif
