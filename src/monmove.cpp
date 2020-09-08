@@ -1,67 +1,48 @@
 // Monster movement code; essentially, the AI
 
-#include <corecrt.h>
-#include <algorithm>
-#include <cfloat>
-#include <climits>
-#include <cmath>
+#include "monster.h" // IWYU pragma: associated
+
 #include <cstdlib>
-#include <iterator>
-#include <map>
+#include <cmath>
+#include <algorithm>
 #include <memory>
 #include <ostream>
-#include <set>
-#include <string>
-#include <unordered_map>
-#include <utility>
-#include <vector>
+#include <list>
+#include <cfloat>
 
 #include "avatar.h"
 #include "bionics.h"
-#include "bodypart.h"
-#include "calendar.h"
-#include "cata_utility.h"
-#include "character.h"
-#include "character_id.h"
-#include "creature.h"
-#include "creature_tracker.h"
-#include "damage.h"
 #include "debug.h"
-#include "enums.h"
 #include "field.h"
-#include "field_type.h"
 #include "game.h"
-#include "game_constants.h"
-#include "int_id.h"
-#include "item.h"
 #include "line.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "mapdata.h"
-#include "mattack_common.h"
-#include "memory_fast.h"
 #include "messages.h"
 #include "monfaction.h"
-#include "monster.h" // IWYU pragma: associated
 #include "mtype.h"
-#include "multiplay_manager.h"
+#include "creature_tracker.h"
 #include "npc.h"
-#include "options.h"
-#include "pathfinding.h"
-#include "point.h"
 #include "rng.h"
 #include "scent_map.h"
 #include "sounds.h"
-#include "string_formatter.h"
-#include "string_id.h"
-#include "tileray.h"
 #include "translations.h"
 #include "trap.h"
-#include "type_id.h"
-#include "units.h"
-#include "veh_type.h"
-#include "vehicle.h"
 #include "vpart_position.h"
+#include "tileray.h"
+#include "vehicle.h"
+#include "cata_utility.h"
+#include "game_constants.h"
+#include "mattack_common.h"
+#include "pathfinding.h"
+#include "player.h"
+#include "int_id.h"
+#include "string_id.h"
+#include "pimpl.h"
+#include "string_formatter.h"
+#include "multiplay_manager.h"
+#include "sounds.h"
 
 static const efftype_id effect_bouldering( "bouldering" );
 static const efftype_id effect_countdown( "countdown" );
@@ -346,11 +327,8 @@ void monster::plan()
     auto mood = attitude();
 
     if ( !multiplay_client_name.empty() ) {
-        client_command cmd = g->multiplay_manager_ref.find_command( multiplay_client_name );
-        if( cmd.c_type != client_command_auto_move ) {
-            unset_dest();
-            return;
-        }
+        unset_dest();
+        return;
     }
 
     // If we can see the player, move toward them or flee, simpleminded animals are too dumb to follow the player.
@@ -741,17 +719,6 @@ void monster::move()
 
     const bool pacified = has_effect( effect_pacified );
 
-    // multiplay controlled monster do not use special except when special attack command
-    bool is_not_use_special_flag = false;
-    if ( !multiplay_client_name.empty() ) {
-        if( cmd.c_type == client_command_special_attack ){
-            g->multiplay_manager_ref.erase_command( multiplay_client_name );
-        } else {
-            is_not_use_special_flag = true;
-        }
-    }
-
-
     // First, use the special attack, if we can!
     // The attack may change `monster::special_attacks` (e.g. by transforming
     // this into another monster type). Therefore we can not iterate over it
@@ -768,11 +735,14 @@ void monster::move()
             continue;
         }
 
-        if( is_not_use_special_flag ){
-            continue;
-        }
-
         // Cooldowns are decremented in monster::process_turn
+        if ( !multiplay_client_name.empty() ) {
+            if( cmd.c_type == client_command_special_attack ){
+                g->multiplay_manager_ref.erase_command( multiplay_client_name );
+            } else {
+                continue;
+            }
+        }
 
         if( local_attack_data.cooldown == 0 && !pacified && !is_hallucination() ) {
             if( !sp_type.second->call( *this ) ) {
@@ -1043,7 +1013,7 @@ void monster::move()
 
         // find move command from command map
         add_msg( m_debug, _("move_command :%s"), cmd.command_argument);
-        if( cmd.c_type == client_command_move || cmd.c_type == client_command_move_repeatly ){
+        if( cmd.c_type == client_command_move ){
             moved = true;
             if( cmd.command_argument == "N") {
                 next_step = g->m.getabs(pos() + tripoint(0,-1, 0));
@@ -1064,16 +1034,7 @@ void monster::move()
             } else {
                 moved = false;
             }
-            if( get_option<bool>("DISALLOW_CLIENT_ATTACK_PLAYER") ){
-                if( next_step == g->m.getabs(g->u.pos()) ) {
-                    // prevent attack player
-                    moved = false;
-                }
-            }
-
-            if( cmd.c_type != client_command_move_repeatly ) {
-                g->multiplay_manager_ref.erase_command( multiplay_client_name );
-            }
+            g->multiplay_manager_ref.erase_command( multiplay_client_name );
         } else if ( cmd.c_type == client_command_message ) {
             sounds::sound( pos(), 20, sounds::sound_t::speech, cmd.command_argument,
                            false, "speech", type->id.str() );
@@ -1081,8 +1042,6 @@ void monster::move()
         } else if ( cmd.c_type == client_command_despawn ) {
             hp = 0;
             g->multiplay_manager_ref.erase_command( multiplay_client_name );
-        } else if( cmd.c_type == client_command_auto_move) {
-            // do nothing, to behavor normal pet monster moving (maybe).
         } else {
             moved = false;
         }
@@ -1117,7 +1076,7 @@ void monster::move()
     } else {
         moves -= 100;
         if( !multiplay_client_name.empty() ) {
-            moves += 20;
+            moves += 50;
         } else {
             stumble();
         }
