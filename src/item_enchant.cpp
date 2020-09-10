@@ -567,7 +567,7 @@ void item_enchant::deserialize(const JsonObject &jo) {
     emit_id_to_emit = enchant_definition.emit_id_to_emit;
 
     heal_amount = enchant_definition.heal_amount;
-    heal_type = enchant_definition.heal_type;
+    heal_type_enchant = enchant_definition.heal_type_enchant;
 
     message_on_trigger = enchant_definition.message_on_trigger;
 
