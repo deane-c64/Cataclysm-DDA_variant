@@ -78,6 +78,7 @@
 #include "npc.h"
 #include "options.h"
 #include "speech.h"
+#include "text_snippets.h"
 
 static const activity_id ACT_FIRSTAID( "ACT_FIRSTAID" );
 static const activity_id ACT_MAKE_ZLAVE( "ACT_MAKE_ZLAVE" );
@@ -106,6 +107,8 @@ static const efftype_id effect_drunk( "drunk" );
 static const efftype_id effect_estrus( "estrus" );
 static const efftype_id effect_corrupt( "corrupt" );
 static const efftype_id effect_pet( "pet" );
+static const efftype_id effect_went_heaven( "went_heaven" );
+static const efftype_id effect_lust( "lust" );
 
 // for hentai
 static const efftype_id effect_movingdoing( "movingdoing" );
@@ -5083,6 +5086,63 @@ std::unique_ptr<iuse_actor> yiff_actor::clone() const
 {
     return std::make_unique<yiff_actor>( *this );
 }
+
+void cubi_glove_actor::load( const JsonObject &obj )
+{
+  (void)obj;
+}
+
+int cubi_glove_actor::use( player &p, item &it, bool, const tripoint & ) const
+{
+
+  (void)p;
+  (void)it;
+
+    const std::function<bool( const tripoint & )> f = [&]( const tripoint & pnt ) {
+        return ( g->critter_at<npc>( pnt ) != nullptr ) || ( g->critter_at<player>( pnt ) != nullptr ) ||
+               ( g->critter_at<monster>( pnt ) != nullptr );
+    };
+    const std::function<std::string( const std::string & )> get_text =[&]( const std::string & id ) {
+        return snippet_id( id )->translated();
+    };
+
+    const cata::optional<tripoint> pnt_ = choose_adjacent_highlight( _( "Use to whom?" ),
+                                            _( "There is no one to use to nearby." ), f, false );
+    if( !pnt_ ) {
+        return 0;
+    }
+    const tripoint &pnt = *pnt_;
+
+    Creature *target = g->critter_at<Creature>( pnt );
+    if( target != nullptr ) {
+
+        target->add_msg_player_or_npc( m_mixed,
+                 SNIPPET.random_from_category( "seduce_msg_player" ).value_or( translation() ),
+                 SNIPPET.random_from_category( "seduce_msg_npc" ).value_or( translation() ),
+                 g->u.name,
+                 SNIPPET.random_from_category( "hentai_bp" ).value_or( translation() ) );
+        target->gain_corrupt( rng( 1, 20 ), 100_turns );
+        target->add_effect( effect_lust, 4_turns );
+
+        if( target->get_effect_int( effect_lust ) >= 100 ) {
+            target->add_msg_player_or_npc( m_info,
+                  _( "You go to heaven!" ),
+                  _( "<npcname> goes to heaven!" ) );
+            target->remove_effect( effect_lust );
+            target->mod_moves( -50 );
+
+            // additional effect
+            target->add_effect( effect_went_heaven, 60_turns );
+        }
+    }
+    return 0;
+}
+
+std::unique_ptr<iuse_actor> cubi_glove_actor::clone() const
+{
+    return std::make_unique<cubi_glove_actor>( *this );
+}
+
 
 void iuse_condition::load( const JsonObject &obj )
 {

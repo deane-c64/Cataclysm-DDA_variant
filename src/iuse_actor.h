@@ -1232,6 +1232,22 @@ class yiff_actor : public iuse_actor
         std::tuple<float, bool> get_willing( const player &p, const npc &target ) const;
 };
 
+/**
+ * cubi_glove - for hentai extend
+ */
+class cubi_glove_actor : public iuse_actor
+{
+    public:
+
+        cubi_glove_actor( const std::string &type = "cubi_glove" ) : iuse_actor( type ) {}
+
+        ~cubi_glove_actor() override = default;
+        void load( const JsonObject &obj ) override;
+        int use( player &, item &, bool, const tripoint & ) const override;
+        std::unique_ptr<iuse_actor> clone() const override;
+
+};
+
 struct iuse_condition {
     std::string cond;
     std::string value;
